@@ -1,0 +1,3757 @@
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-1
+
+
+       1				.386 
+       2 0000				instructions		SEGMENT	
+						use16 
+       3								
+						ASSUME		cs:instructions
+					 
+       4 0000				variables proc 
+       5 0000  C3					ret 
+       6 0001  ????????			vector8			dd	
+						? 
+       7 0005  ????????			vector9			dd	
+						? 
+       8 0009  00			game_over		db	
+						0 
+       9 000A  ????????			random_number	dd		? 
+      10 000E  4F1E 6636 0248 0808	colors			dw	
+						4f1eh, 6636h, 0248h, 0808h
+							; left8bit=border_color
+					, right8bit=inside_color. 
+      11 0016  0008			tile_size		dw	
+						8 
+      12				;#region shapes 
+      13				;		SHAPE O: 
+      14				;				[ ][ ][
+					 ][ ] 
+      15				;				[ ][1][
+					2][ ] 
+      16				;				[ ][3][
+					4][ ] 
+      17				;				[ ][ ][
+					 ][ ] 
+      18 0018  02010201			shape_O_X		dd	
+						01020102h 
+      19 001C  02020101			shape_O_Y		dd	
+						01010202h		 
+      20				;		SHAPE I: 
+      21				;				[ ][ ][
+					 ][ ]	[ ][ ][1][ ] 
+      22				;				[1][2][
+					3][4]	[ ][ ][2][ ] 
+      23				;				[ ][ ][
+					 ][ ]	[ ][ ][3][ ] 
+      24				;				[ ][ ][
+					 ][ ]	[ ][ ][4][ ] 
+      25 0020  0302010002020202		shape_I_X		dd	
+						00010203h, 02020202h 
+      26 0028  0101010103020100		shape_I_Y		dd	
+						01010101h, 00010203h 
+      27				;		SHAPE T: 
+      28				;				[ ][ ][
+					 ][ ]	[ ][ ][1][ ]	[ ][ ][1][ ]
+						[ ][ ][1][ ] 
+      29				;				[ ][1][
+					2][3]	[ ][2][3][ ]	[ ][2][3][4]
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-2
+
+
+						[ ][ ][2][3] 
+      30				;				[ ][ ][
+					4][ ]	[ ][ ][4][ ]	[ ][ ][ ][ ]
+						[ ][ ][4][ ] 
+      31				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][ ]	[ ][ ][ ][ ]
+						[ ][ ][ ][ ] 
+      32 0030  02030201020201020302	shape_T_X		dd	
+						01020302h, 02010202h, 02010203h
+					, 02020302h 
+      33       010202030202		
+      34 0040  02010101020101000101	shape_T_Y		dd	
+						01010102h, 00010102h, 00010101h
+					, 00010102h 
+      35       010002010100		
+      36				;		SHAPE L: 
+      37				;				[ ][ ][
+					 ][ ]	[ ][1][2][ ]	[ ][ ][ ][1]
+						[ ][ ][1][ ] 
+      38				;				[ ][1][
+					2][3]	[ ][ ][3][ ]	[ ][2][3][4]
+						[ ][ ][2][ ] 
+      39				;				[ ][4][
+					 ][ ]	[ ][ ][4][ ]	[ ][ ][ ][ ]
+						[ ][ ][3][4] 
+      40				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][ ]	[ ][ ][ ][ ]
+						[ ][ ][ ][ ] 
+      41 0050  01030201020202010302	shape_L_X		dd	
+						01020301h, 01020202h, 03010203h
+					, 02020203h 
+      42       010303020202		
+      43 0060  02010101020100000101	shape_L_Y		dd	
+						01010102h, 00000102h, 00010101h
+					, 00010202h 
+      44       010002020100		
+      45				;		SHAPE J: 
+      46				;				[ ][ ][
+					 ][ ]	[ ][ ][1][ ]	[ ][1][ ][ ]
+						[ ][ ][1][2] 
+      47				;				[ ][1][
+					2][3]	[ ][ ][2][ ]	[ ][2][3][4]
+						[ ][ ][3][ ] 
+      48				;				[ ][ ][
+					 ][4]	[ ][3][4][ ]	[ ][ ][ ][ ]
+						[ ][ ][4][ ] 
+      49				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][ ]	[ ][ ][ ][ ]
+						[ ][ ][ ][ ] 
+      50 0070  03030201020102020302	shape_J_X		dd	
+						01020303h, 02020102h, 01010203h
+					, 02030202h 
+      51       010102020302		
+      52 0080  02010101020201000101	shape_J_Y		dd	
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-3
+
+
+						01010102h, 00010202h, 00010101h
+					, 00000102h 
+      53       010002010000		
+      54				;		SHAPE S: 
+      55				;				[ ][ ][
+					 ][ ]	[ ][ ][1][ ] 
+      56				;				[ ][ ][
+					1][2]	[ ][ ][2][3] 
+      57				;				[ ][3][
+					4][ ]	[ ][ ][ ][4] 
+      58				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][ ] 
+      59 0090  0201030203030202		shape_S_X		dd	
+						02030102h, 02020303h 
+      60 0098  0202010102010100		shape_S_Y		dd	
+						01010202h, 00010102h 
+      61				;		SHAPE Z: 
+      62				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][1] 
+      63				;				[ ][1][
+					2][ ]	[ ][ ][2][3] 
+      64				;				[ ][ ][
+					3][4]	[ ][ ][4][ ] 
+      65				;				[ ][ ][
+					 ][ ]	[ ][ ][ ][ ] 
+      66 00A0  0302020102030203		shape_Z_X		dd	
+						01020203h, 03020302h 
+      67 00A8  0202010102010100		shape_Z_Y		dd	
+						01010202h, 00010102h 
+      68				;#endregion 
+      69				;#region player 1 
+      70 00B0  ????			p1_top_left_next	dw	
+						? 
+      71 00B2  ????			p1_top_left		dw	
+						? 
+      72 00B4  ????			p1_key_R		dw	
+						? 
+      73 00B6  ????			p1_key_L		dw	
+						? 
+      74 00B8  ????			p1_key_D		dw	
+						? 
+      75 00BA  ????			p1_key_RR		dw	
+						? 
+      76 00BC  ????			p1_key_LR		dw	
+						? 
+      77 00BE  00			p1_pressing_R	db		0 
+      78 00BF  00			p1_pressing_L	db		0 
+      79 00C0  00			p1_pressing_D	db		0 
+      80 00C1  00			p1_pressing_RR	db		0 
+      81 00C2  00			p1_pressing_RL	db		0 
+      82 00C3  00			p1_moving_R		db	
+						0 
+      83 00C4  00			p1_moving_L		db	
+						0 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-4
+
+
+      84 00C5  ????			p1_color		dw	
+						? 
+      85 00C7  00			p1_delay		db	
+						0 
+      86 00C8  ??			p1_shape		db	
+						? 
+      87 00C9  ??			p1_rotation		db	
+						? 
+      88 00CA  00D2[			p1_board		dw	
+						210 dup (0) 
+      89	   0000			
+      90			 ]	
+      91				
+      92 026E  ??			p1_shape_X		db	
+						? 
+      93 026F  ??			p1_shape_Y		db	
+						? 
+      94 0270  0004[			p1_tiles_X		db	
+						4 dup (?) 
+      95	    ??			
+      96			 ]	
+      97				
+      98 0274  0004[			p1_tiles_Y		db	
+						4 dup (?) 
+      99	    ??			
+     100			 ]	
+     101				
+     102 0278  0004[			p1_pixel_positions		dw
+							4 dup (?) 
+     103	   ????			
+     104			 ]	
+     105				
+     106 0280  ??			p1_speed		db	
+						? 
+     107 0281  ??			p1_speed_step	db		? 
+     108 0282  00			p1_move_step	db		0 
+     109 0283  ????????			p1_rand_number	dd		? 
+     110 0287  ??			p1_next_shape	db		? 
+     111 0288  01			p1_can_move_D	db		1 
+     112				;#endregion 
+     113				;#region player 2 
+     114 0289  ????			p2_top_left_next	dw	
+						? 
+     115 028B  ????			p2_top_left		dw	
+						? 
+     116 028D  ????			p2_key_R		dw	
+						? 
+     117 028F  ????			p2_key_L		dw	
+						? 
+     118 0291  ????			p2_key_D		dw	
+						? 
+     119 0293  ????			p2_key_RR		dw	
+						? 
+     120 0295  ????			p2_key_LR		dw	
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-5
+
+
+						? 
+     121 0297  00			p2_pressing_R	db		0 
+     122 0298  00			p2_pressing_L	db		0 
+     123 0299  00			p2_pressing_D	db		0 
+     124 029A  00			p2_pressing_RR	db		0 
+     125 029B  00			p2_pressing_RL	db		0 
+     126 029C  00			p2_moving_R		db	
+						0 
+     127 029D  00			p2_moving_L		db	
+						0 
+     128 029E  ????			p2_color		dw	
+						? 
+     129 02A0  00			p2_delay		db	
+						0 
+     130 02A1  ??			p2_shape		db	
+						? 
+     131 02A2  ??			p2_rotation		db	
+						? 
+     132 02A3  00D2[			p2_board		dw	
+						210 dup (0) 
+     133	   0000			
+     134			 ]	
+     135				
+     136 0447  ??			p2_shape_X		db	
+						? 
+     137 0448  ??			p2_shape_Y		db	
+						? 
+     138 0449  0004[			p2_tiles_X		db	
+						4 dup (?) 
+     139	    ??			
+     140			 ]	
+     141				
+     142 044D  0004[			p2_tiles_Y		db	
+						4 dup (?) 
+     143	    ??			
+     144			 ]	
+     145				
+     146 0451  0004[			p2_pixel_positions		dw
+							4 dup (?) 
+     147	   ????			
+     148			 ]	
+     149				
+     150 0459  ??			p2_speed		db	
+						? 
+     151 045A  ??			p2_speed_step	db		? 
+     152 045B  00			p2_move_step	db		0 
+     153 045C  ????????			p2_rand_number	dd		? 
+     154 0460  ??			p2_next_shape	db		? 
+     155 0461  01			p2_can_move_D	db		1 
+     156				;#endregion 
+     157 0462				variables endp 
+     158				 
+     159				; p1 and p2 will get the same 32 bit ra
+					ndom number 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-6
+
+
+     160				; to calculate new random pieces, but t
+					he same for each player 
+     161 0462				start_random_numbers proc 
+     162 0462  66| 50					push		eax 
+     163 0464  51					push		cx 
+     164 0465  52					push		dx 
+     165				 
+     166 0466  B4 2C					mov		
+						ah, 2ch 
+     167 0468  CD 21					int		
+						21h		; ch=hours, cl=
+					minutes, dh=seconds, dl=hundredths 
+     168						 
+     169 046A  66| B8 00000000				mov		
+						eax, 0 
+     170 0470  8B C2					mov		
+						ax, dx 
+     171 0472  B5 00					mov		
+						ch, 0 
+     172 0474  F7 E1					mul		
+						cx 
+     173 0476  66| C1 D0 10				rcl		
+						eax, 16 
+     174 047A  03 C1					add		
+						ax, cx 
+     175				 
+     176 047C  81 C2 ABBA				add		
+						dx, 0abbah 
+     177 0480  81 C1 DEAD				add		
+						cx, 0deadh 
+     178 0484  81 F2 ACDC				xor		
+						dx, 0acdch 
+     179 0488  81 F1 0D1E				xor		
+						cx, 0d1eh 
+     180				 
+     181 048C  66| C1 D0 0D				rcl		
+						eax, 13 
+     182 0490  33 C2					xor		
+						ax, dx 
+     183 0492  66| C1 D0 07				rcl		
+						eax, 7 
+     184 0496  33 C1					xor		
+						ax, cx 
+     185				 
+     186 0498  2E: 66| A3 0283 R			mov		
+						cs:p1_rand_number, eax 
+     187 049D  2E: 66| A3 045C R			mov		
+						cs:p2_rand_number, eax 
+     188				 
+     189 04A2  5A					pop		
+						dx 
+     190 04A3  59					pop		
+						cx 
+     191 04A4  66| 58					pop		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-7
+
+
+						eax 
+     192 04A6  C3					ret 
+     193 04A7				start_random_numbers endp 
+     194				; most functions an argument ss:[bp+4] 
+     195				; if [bp+4] == 1 then function works fo
+					r player 1 
+     196				; else it works for player 2 
+     197 04A7				update_random_number proc 
+     198 04A7  55					push		bp 
+     199 04A8  8B EC					mov		
+						bp, sp 
+     200 04AA  66| 50					push		eax 
+     201 04AC  53					push		bx 
+     202				 
+     203 04AD  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+     204 04B1  0F 85 04BB R				jne		
+						update_p2_number 
+     205 04B5  BB 0283 R				mov		
+						bx, offset cs:p1_rand_number 
+     206 04B8  EB 04 90					jmp		
+						start_updating_random_number 
+     207 04BB				update_p2_number: 
+     208 04BB  BB 045C R				mov		
+						bx, offset cs:p2_rand_number 
+     209 04BE				start_updating_random_number: 
+     210 04BE  2E: 66| 8B 07				mov		
+						eax, cs:[bx] 
+     211 04C2  2E: 33 47 01				xor		
+						ax, cs:[bx+1] 
+     212 04C6  66| C1 C0 0E				rol		
+						eax, 14			; just 
+					doing something here 
+     213 04CA  2E: 66| 03 07				add		
+						eax, cs:[bx] 
+     214 04CE  2E: 66| 89 07				mov		
+						cs:[bx], eax 
+     215				 
+     216 04D2  5B					pop		
+						bx 
+     217 04D3  66| 58					pop		
+						eax 
+     218 04D5  5D					pop		
+						bp 
+     219 04D6  C3					ret 
+     220 04D7				update_random_number endp 
+     221				 
+     222 04D7				keyboard_function proc 
+     223 04D7  50					push		ax 
+     224				 
+     225 04D8  E4 60					in		
+						al, 60h			; al = 
+					scan code of pressed/released key
+						 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-8
+
+
+     226 04DA  3C 4D					cmp		
+						al, 77 
+     227 04DC  0F 84 0568 R				je		
+						p2_right_pressed 
+     228 04E0  3C CD					cmp		
+						al, 205 
+     229 04E2  0F 84 0571 R				je		
+						p2_right_released 
+     230 04E6  3C 4B					cmp		
+						al, 75 
+     231 04E8  0F 84 0580 R				je		
+						p2_left_pressed 
+     232 04EC  3C CB					cmp		
+						al, 203 
+     233 04EE  0F 84 0589 R				je		
+						p2_left_released 
+     234 04F2  3C 50					cmp		
+						al, 80 
+     235 04F4  0F 84 0598 R				je		
+						p2_down_pressed 
+     236 04F8  3C D0					cmp		
+						al, 208 
+     237 04FA  0F 84 05AB R				je		
+						p2_down_released 
+     238 04FE  3C 48					cmp		
+						al, 72 
+     239 0500  0F 84 05BA R				je		
+						p2_RR_pressed 
+     240 0504  3C 35					cmp		
+						al, 53 
+     241 0506  0F 84 05BA R				je		
+						p2_RR_pressed 
+     242 050A  3C 34					cmp		
+						al, 52 
+     243 050C  0F 84 05C3 R				je		
+						p2_RL_pressed 
+     244 0510  3C 20					cmp		
+						al, 32 
+     245 0512  0F 84 05CC R				je		
+						p1_right_pressed 
+     246 0516  3C A0					cmp		
+						al, 160 
+     247 0518  0F 84 05D5 R				je		
+						p1_right_released 
+     248 051C  3C 1E					cmp		
+						al, 30 
+     249 051E  0F 84 05E4 R				je		
+						p1_left_pressed 
+     250 0522  3C 9E					cmp		
+						al, 158 
+     251 0524  0F 84 05ED R				je		
+						p1_left_released 
+     252 0528  3C 1F					cmp		
+						al, 31 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-9
+
+
+     253 052A  0F 84 05FC R				je		
+						p1_down_pressed 
+     254 052E  3C 9F					cmp		
+						al, 159 
+     255 0530  0F 84 060F R				je		
+						p1_down_released 
+     256 0534  3C 11					cmp		
+						al, 17 
+     257 0536  0F 84 061E R				je		
+						p1_RR_pressed 
+     258 053A  3C 15					cmp		
+						al, 21 
+     259 053C  0F 84 061E R				je		
+						p1_RR_pressed 
+     260 0540  3C 14					cmp		
+						al, 20 
+     261 0542  0F 84 0627 R				je		
+						p1_RL_pressed 
+     262 0546  3C 39					cmp		
+						al, 57 
+     263 0548  0F 84 0630 R				je		
+						space_pressed 
+     264 054C  3C 01					cmp		
+						al, 1 
+     265 054E  0F 84 0636 R				je		
+						escape_pressed 
+     266 0552  3C 0B					cmp		
+						al, 11 
+     267 0554  0F 82 055B R				jb		
+						number_pressed 
+     268				 
+     269 0558  E9 063C R				jmp		
+						keyboard_function_end 
+     270 055B				number_pressed: 
+     271 055B  FE C8					dec		
+						al 
+     272 055D  2E: A2 0280 R				mov		
+						cs:p1_speed, al 
+     273 0561  2E: A2 0459 R				mov		
+						cs:p2_speed, al 
+     274 0565  E9 063C R				jmp		
+						keyboard_function_end 
+     275 0568				p2_right_pressed: 
+     276 0568  2E: C6 06 0297 R 01			mov		
+						byte ptr cs:p2_pressing_R, 1 
+     277 056E  E9 063C R				jmp		
+						keyboard_function_end 
+     278 0571				p2_right_released: 
+     279 0571  2E: C6 06 0297 R 00			mov		
+						byte ptr cs:p2_pressing_R, 0 
+     280 0577  2E: C6 06 029C R 00			mov		
+						byte ptr cs:p2_moving_R, 0 
+     281 057D  E9 063C R				jmp		
+						keyboard_function_end 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-10
+
+
+     282 0580				p2_left_pressed: 
+     283 0580  2E: C6 06 0298 R 01			mov		
+						byte ptr cs:p2_pressing_L, 1 
+     284 0586  E9 063C R				jmp		
+						keyboard_function_end 
+     285 0589				p2_left_released: 
+     286 0589  2E: C6 06 0298 R 00			mov		
+						byte ptr cs:p2_pressing_L, 0 
+     287 058F  2E: C6 06 029D R 00			mov		
+						byte ptr cs:p2_moving_L, 0 
+     288 0595  E9 063C R				jmp		
+						keyboard_function_end 
+     289 0598				p2_down_pressed: 
+     290 0598  2E: 80 3E 0461 R 01			cmp		
+						byte ptr cs:p2_can_move_D, 1 
+     291 059E  0F 85 063C R				jne		
+						keyboard_function_end 
+     292 05A2  2E: C6 06 0299 R 01			mov		
+						byte ptr cs:p2_pressing_D, 1 
+     293 05A8  E9 063C R				jmp		
+						keyboard_function_end 
+     294 05AB				p2_down_released: 
+     295 05AB  2E: C6 06 0461 R 01			mov		
+						byte ptr cs:p2_can_move_D, 1 
+     296 05B1  2E: C6 06 0299 R 00			mov		
+						byte ptr cs:p2_pressing_D, 0 
+     297 05B7  E9 063C R				jmp		
+						keyboard_function_end 
+     298 05BA				p2_RR_pressed: 
+     299 05BA  2E: C6 06 029A R 01			mov		
+						byte ptr cs:p2_pressing_RR, 1 
+     300 05C0  EB 7A 90					jmp		
+						keyboard_function_end 
+     301 05C3				p2_RL_pressed: 
+     302 05C3  2E: C6 06 029B R 01			mov		
+						byte ptr cs:p2_pressing_RL, 1 
+     303 05C9  EB 71 90					jmp		
+						keyboard_function_end 
+     304 05CC				p1_right_pressed: 
+     305 05CC  2E: C6 06 00BE R 01			mov		
+						byte ptr cs:p1_pressing_R, 1 
+     306 05D2  EB 68 90					jmp		
+						keyboard_function_end 
+     307 05D5				p1_right_released: 
+     308 05D5  2E: C6 06 00BE R 00			mov		
+						byte ptr cs:p1_pressing_R, 0 
+     309 05DB  2E: C6 06 00C3 R 00			mov		
+						byte ptr cs:p1_moving_R, 0 
+     310 05E1  EB 59 90					jmp		
+						keyboard_function_end 
+     311 05E4				p1_left_pressed: 
+     312 05E4  2E: C6 06 00BF R 01			mov		
+						byte ptr cs:p1_pressing_L, 1 
+     313 05EA  EB 50 90					jmp		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-11
+
+
+						keyboard_function_end 
+     314 05ED				p1_left_released: 
+     315 05ED  2E: C6 06 00BF R 00			mov		
+						byte ptr cs:p1_pressing_L, 0 
+     316 05F3  2E: C6 06 00C4 R 00			mov		
+						byte ptr cs:p1_moving_L, 0 
+     317 05F9  EB 41 90					jmp		
+						keyboard_function_end 
+     318 05FC				p1_down_pressed: 
+     319 05FC  2E: 80 3E 0288 R 01			cmp		
+						byte ptr cs:p1_can_move_D, 1 
+     320 0602  0F 85 063C R				jne		
+						keyboard_function_end 
+     321 0606  2E: C6 06 00C0 R 01			mov		
+						byte ptr cs:p1_pressing_D, 1 
+     322 060C  EB 2E 90					jmp		
+						keyboard_function_end 
+     323 060F				p1_down_released: 
+     324 060F  2E: C6 06 0288 R 01			mov		
+						byte ptr cs:p1_can_move_D, 1 
+     325 0615  2E: C6 06 00C0 R 00			mov		
+						byte ptr cs:p1_pressing_D, 0 
+     326 061B  EB 1F 90					jmp		
+						keyboard_function_end 
+     327 061E				p1_RR_pressed: 
+     328 061E  2E: C6 06 00C1 R 01			mov		
+						byte ptr cs:p1_pressing_RR, 1 
+     329 0624  EB 16 90					jmp		
+						keyboard_function_end 
+     330 0627				p1_RL_pressed: 
+     331 0627  2E: C6 06 00C2 R 01			mov		
+						byte ptr cs:p1_pressing_RL, 1 
+     332 062D  EB 0D 90					jmp		
+						keyboard_function_end 
+     333 0630				space_pressed: 
+     334 0630  E8 0CC0 R				call		clear_b
+					oards 
+     335 0633  EB 07 90					jmp		
+						keyboard_function_end 
+     336 0636				escape_pressed: 
+     337 0636  2E: C6 06 0009 R 01			mov		
+						byte ptr cs:game_over, 1 
+     338 063C				keyboard_function_end: 
+     339 063C  58					pop		
+						ax 
+     340 063D  2E: FF 2E 0005 R				jmp		
+						dword ptr cs:vector9 
+     341 0642  C3					ret 
+     342 0643				keyboard_function endp 
+     343				 
+     344 0643				clock_function proc 
+     345 0643  55					push		bp 
+     346 0644  8B EC					mov		
+						bp, sp 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-12
+
+
+     347 0646  51					push		cx 
+     348				 
+     349 0647  2E: 80 3E 00C1 R 01			cmp		
+						byte ptr cs:p1_pressing_RR, 1 
+     350 064D  0F 85 0660 R				jne		
+						check_p1_RL 
+     351 0651  2E: C6 06 00C1 R 00			mov		
+						byte ptr cs:p1_pressing_RR, 0
+							; set to 0 in order to 
+					prevent double rotation from one button
+					 press 
+     352 0657  68 0101					push		0101h
+							; 8bit = 1/-1 -> left/r
+					ight, 8bit = 1/2 -> player1/player2 
+     353 065A  E8 089F R				call		rotate 
+     354 065D  83 C4 02					add		
+						sp, 2 
+     355 0660				check_p1_RL: 
+     356 0660  2E: 80 3E 00C2 R 01			cmp		
+						byte ptr cs:p1_pressing_RL, 1 
+     357 0666  0F 85 0679 R				jne		
+						check_p2_RR 
+     358 066A  2E: C6 06 00C2 R 00			mov		
+						byte ptr cs:p1_pressing_RL, 0 
+     359 0670  68 FF01					push		0ff01h 
+     360 0673  E8 089F R				call		rotate 
+     361 0676  83 C4 02					add		
+						sp, 2 
+     362 0679				check_p2_RR: 
+     363 0679  2E: 80 3E 029A R 01			cmp		
+						byte ptr cs:p2_pressing_RR, 1 
+     364 067F  0F 85 0692 R				jne		
+						check_p2_RL 
+     365 0683  2E: C6 06 029A R 00			mov		
+						byte ptr cs:p2_pressing_RR, 0 
+     366 0689  68 0102					push		0102h 
+     367 068C  E8 089F R				call		rotate 
+     368 068F  83 C4 02					add		
+						sp, 2 
+     369 0692				check_p2_RL: 
+     370 0692  2E: 80 3E 029B R 01			cmp		
+						byte ptr cs:p2_pressing_RL, 1 
+     371 0698  0F 85 06AB R				jne		
+						check_p1_delay 
+     372 069C  2E: C6 06 029B R 00			mov		
+						byte ptr cs:p2_pressing_RL, 0 
+     373 06A2  68 FF02					push		0ff02h 
+     374 06A5  E8 089F R				call		rotate 
+     375 06A8  83 C4 02					add		
+						sp, 2 
+     376				 
+     377					; when pressing right/left key 
+					for the first time 
+     378					; piece moves one step, waits a
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-13
+
+
+					 couple of frames 
+     379					; and then moves each 2 frames.
+					 thats why there is delay 
+     380				 
+     381 06AB				check_p1_delay: 
+     382 06AB  2E: 80 3E 00C7 R 00			cmp		
+						byte ptr cs:p1_delay, 0 
+     383 06B1  0F 84 06BA R				je		
+						check_p2_delay 
+     384 06B5  2E: FE 0E 00C7 R				dec		
+						byte ptr cs:p1_delay 
+     385 06BA				check_p2_delay: 
+     386 06BA  2E: 80 3E 02A0 R 00			cmp		
+						byte ptr cs:p2_delay, 0 
+     387 06C0  0F 84 06C9 R				je		
+						checked_p2_delay 
+     388 06C4  2E: FE 0E 02A0 R				dec		
+						byte ptr cs:p2_delay 
+     389 06C9				checked_p2_delay: 
+     390						; checking if pressing 
+					right key means something like this: 
+     391						; if (pressing_R && !mo
+					ving_R || pressing_R && !delay) { 
+     392						;		(moving
+					_R) ? delay=2 : delay=5 ; 
+     393						;		moving_
+					R = 1; 
+     394						;		move_ri
+					ght(); } 
+     395 06C9  2E: 80 3E 00BE R 01			cmp		
+						byte ptr cs:p1_pressing_R, 1 
+     396 06CF  0F 85 0708 R				jne		
+						p1_is_not_pressing_R 
+     397 06D3  2E: 80 3E 00C3 R 01			cmp		
+						byte ptr cs:p1_moving_R, 1
+							; moving_R is set to 1 
+					after making first step, and to 0 after
+					 releasing key 
+     398 06D9  0F 84 06F5 R				je		
+						p1_keep_pressing_R 
+     399 06DD  2E: C6 06 00C7 R 03			mov		
+						byte ptr cs:p1_delay, 3	
+						; that's the delay after first 
+					step 
+     400 06E3  2E: C6 06 00C3 R 01			mov		
+						byte ptr cs:p1_moving_R, 1 
+     401 06E9  68 0001					push		word pt
+					r 1		; p1_right_key was just
+					 pressed 
+     402 06EC  E8 0ACF R				call		move_ri
+					ght 
+     403 06EF  83 C4 02					add		
+						sp, 2 
+     404 06F2  EB 53 90					jmp		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-14
+
+
+						p1_is_not_pressing_L 
+     405 06F5				p1_keep_pressing_R: 
+     406 06F5  2E: 80 3E 00C7 R 00			cmp		
+						byte ptr cs:p1_delay, 0 
+     407 06FB  0F 85 0747 R				jne		
+						p1_is_not_pressing_L 
+     408 06FF  68 0001					push		word pt
+					r 1 
+     409 0702  E8 0ACF R				call		move_ri
+					ght 
+     410 0705  83 C4 02					add		
+						sp, 2 
+     411 0708				p1_is_not_pressing_R: 
+     412 0708  2E: 80 3E 00BF R 01			cmp		
+						byte ptr cs:p1_pressing_L, 1 
+     413 070E  0F 85 0747 R				jne		
+						p1_is_not_pressing_L 
+     414 0712  2E: 80 3E 00C4 R 01			cmp		
+						byte ptr cs:p1_moving_L, 1 
+     415 0718  0F 84 0734 R				je		
+						p1_keep_pressing_L 
+     416 071C  2E: C6 06 00C7 R 03			mov		
+						byte ptr cs:p1_delay, 3 
+     417 0722  2E: C6 06 00C4 R 01			mov		
+						byte ptr cs:p1_moving_L, 1 
+     418 0728  68 0001					push		word pt
+					r 1 
+     419 072B  E8 0B5A R				call		move_le
+					ft 
+     420 072E  83 C4 02					add		
+						sp, 2 
+     421 0731  EB 14 90					jmp		
+						p1_is_not_pressing_L 
+     422 0734				p1_keep_pressing_L: 
+     423 0734  2E: 80 3E 00C7 R 00			cmp		
+						byte ptr cs:p1_delay, 0 
+     424 073A  0F 85 0747 R				jne		
+						p1_is_not_pressing_L 
+     425 073E  68 0001					push		word pt
+					r 1 
+     426 0741  E8 0B5A R				call		move_le
+					ft 
+     427 0744  83 C4 02					add		
+						sp, 2 
+     428 0747				p1_is_not_pressing_L: 
+     429 0747  2E: 80 3E 0297 R 01			cmp		
+						byte ptr cs:p2_pressing_R, 1 
+     430 074D  0F 85 0786 R				jne		
+						p2_is_not_pressing_R 
+     431 0751  2E: 80 3E 029C R 01			cmp		
+						byte ptr cs:p2_moving_R, 1 
+     432 0757  0F 84 0773 R				je		
+						p2_keep_pressing_R 
+     433 075B  2E: C6 06 02A0 R 03			mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-15
+
+
+						byte ptr cs:p2_delay, 3 
+     434 0761  2E: C6 06 029C R 01			mov		
+						byte ptr cs:p2_moving_R, 1 
+     435 0767  68 0002					push		word pt
+					r 2 
+     436 076A  E8 0ACF R				call		move_ri
+					ght 
+     437 076D  83 C4 02					add		
+						sp, 2 
+     438 0770  EB 53 90					jmp		
+						p2_is_not_pressing_L 
+     439 0773				p2_keep_pressing_R: 
+     440 0773  2E: 80 3E 02A0 R 00			cmp		
+						byte ptr cs:p2_delay, 0 
+     441 0779  0F 85 07C5 R				jne		
+						p2_is_not_pressing_L 
+     442 077D  68 0002					push		word pt
+					r 2 
+     443 0780  E8 0ACF R				call		move_ri
+					ght 
+     444 0783  83 C4 02					add		
+						sp, 2 
+     445 0786				p2_is_not_pressing_R: 
+     446 0786  2E: 80 3E 0298 R 01			cmp		
+						byte ptr cs:p2_pressing_L, 1 
+     447 078C  0F 85 07C5 R				jne		
+						p2_is_not_pressing_L 
+     448 0790  2E: 80 3E 029D R 01			cmp		
+						byte ptr cs:p2_moving_L, 1 
+     449 0796  0F 84 07B2 R				je		
+						p2_keep_pressing_L 
+     450 079A  2E: C6 06 02A0 R 03			mov		
+						byte ptr cs:p2_delay, 3 
+     451 07A0  2E: C6 06 029D R 01			mov		
+						byte ptr cs:p2_moving_L, 1 
+     452 07A6  68 0002					push		word pt
+					r 2 
+     453 07A9  E8 0B5A R				call		move_le
+					ft 
+     454 07AC  83 C4 02					add		
+						sp, 2 
+     455 07AF  EB 14 90					jmp		
+						p2_is_not_pressing_L 
+     456 07B2				p2_keep_pressing_L: 
+     457 07B2  2E: 80 3E 02A0 R 00			cmp		
+						byte ptr cs:p2_delay, 0 
+     458 07B8  0F 85 07C5 R				jne		
+						p2_is_not_pressing_L 
+     459 07BC  68 0002					push		word pt
+					r 2 
+     460 07BF  E8 0B5A R				call		move_le
+					ft 
+     461 07C2  83 C4 02					add		
+						sp, 2 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-16
+
+
+     462 07C5				p2_is_not_pressing_L: 
+     463				 
+     464 07C5  2E: 80 3E 00C0 R 01			cmp		
+						byte ptr cs:p1_pressing_D, 1 
+     465 07CB  0F 85 07D5 R				jne		
+						check_p2_down 
+     466 07CF  2E: C6 06 0281 R 01			mov		
+						byte ptr cs:p1_speed_step, 1 
+     467 07D5				check_p2_down: 
+     468 07D5  2E: 80 3E 0299 R 01			cmp		
+						byte ptr cs:p2_pressing_D, 1 
+     469 07DB  0F 85 07E5 R				jne		
+						checked_pressing_down 
+     470 07DF  2E: C6 06 045A R 01			mov		
+						byte ptr cs:p2_speed_step, 1 
+     471 07E5				checked_pressing_down: 
+     472				 
+     473 07E5  2E: 80 2E 0281 R 01			sub		
+						byte ptr cs:p1_speed_step, 1 
+     474 07EB  0F 85 0814 R				jnz		
+						skip_p1_falling 
+     475 07EF  2E: 8A 0E 0280 R				mov		
+						cl, cs:p1_speed 
+     476 07F4  2E: 88 0E 0281 R				mov		
+						cs:p1_speed_step, cl 
+     477 07F9  68 0001					push		word pt
+					r 1 
+     478 07FC  E8 0F43 R				call		erase_s
+					hape 
+     479 07FF  83 C4 02					add		
+						sp, 2 
+     480 0802  68 0001					push		word pt
+					r 1 
+     481 0805  E8 0BE6 R				call		gravita
+					tion 
+     482 0808  83 C4 02					add		
+						sp, 2 
+     483 080B  68 0001					push		word pt
+					r 1 
+     484 080E  E8 0DC5 R				call		draw_sh
+					ape 
+     485 0811  83 C4 02					add		
+						sp, 2 
+     486 0814				skip_p1_falling: 
+     487 0814  2E: 80 2E 045A R 01			sub		
+						byte ptr cs:p2_speed_step, 1 
+     488 081A  0F 85 0843 R				jnz		
+						skip_p2_falling 
+     489 081E  2E: 8A 0E 0459 R				mov		
+						cl, cs:p2_speed 
+     490 0823  2E: 88 0E 045A R				mov		
+						cs:p2_speed_step, cl 
+     491 0828  68 0002					push		word pt
+					r 2 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-17
+
+
+     492 082B  E8 0F43 R				call		erase_s
+					hape 
+     493 082E  83 C4 02					add		
+						sp, 2 
+     494 0831  68 0002					push		word pt
+					r 2 
+     495 0834  E8 0BE6 R				call		gravita
+					tion 
+     496 0837  83 C4 02					add		
+						sp, 2 
+     497 083A  68 0002					push		word pt
+					r 2 
+     498 083D  E8 0DC5 R				call		draw_sh
+					ape 
+     499 0840  83 C4 02					add		
+						sp, 2 
+     500 0843				skip_p2_falling: 
+     501				 
+     502 0843  59					pop		
+						cx 
+     503 0844  5D					pop		
+						bp 
+     504 0845  2E: FF 2E 0001 R				jmp		
+						dword ptr cs:vector8 
+     505 084A  C3					ret 
+     506 084B				clock_function endp 
+     507				 
+     508 084B				draw_mini_grid proc 
+     509 084B  50					push		ax 
+     510 084C  53					push		bx 
+     511 084D  51					push		cx 
+     512 084E  52					push		dx 
+     513 084F  56					push		si 
+     514 0850  06					push		es 
+     515					;this function was used in the 
+					beginning to print board arrays for p1 
+					and p2 
+     516 0851  B8 A000					mov		
+						ax, 0a000h 
+     517 0854  8E C0					mov		
+						es, ax 
+     518				 
+     519 0856  BE 00CA R				mov		
+						si, offset p1_board 
+     520				 
+     521 0859  BA 0015					mov		
+						dx, 21 
+     522 085C  BB 0D16					mov		
+						bx, 3350 
+     523 085F				p1_grid_y: 
+     524 085F  B9 000A					mov		
+						cx, 10 
+     525 0862				p1_grid_x: 
+     526 0862  2E: 8A 04				mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-18
+
+
+						al, byte ptr cs:[si] 
+     527 0865  26: 88 07				mov		
+						es:[bx], al 
+     528 0868  83 C6 02					add		
+						si, 2 
+     529 086B  43					inc		
+						bx 
+     530 086C  E2 F4					loop		p1_grid
+					_x 
+     531 086E  81 C3 0136				add		
+						bx, 310 
+     532 0872  83 EA 01					sub		
+						dx, 1 
+     533 0875  75 E8					jnz		
+						p1_grid_y 
+     534				 
+     535 0877  BE 02A3 R				mov		
+						si, offset p2_board 
+     536 087A  BA 0015					mov		
+						dx, 21 
+     537 087D  BB 3296					mov		
+						bx, 12950 
+     538 0880				p2_grid_y: 
+     539 0880  B9 000A					mov		
+						cx, 10 
+     540 0883				p2_grid_x: 
+     541 0883  2E: 8A 04				mov		
+						al, byte ptr cs:[si] 
+     542 0886  26: 88 07				mov		
+						es:[bx], al 
+     543 0889  83 C6 02					add		
+						si, 2 
+     544 088C  43					inc		
+						bx 
+     545 088D  E2 F4					loop		p2_grid
+					_x 
+     546 088F  81 C3 0136				add		
+						bx, 310 
+     547 0893  83 EA 01					sub		
+						dx, 1 
+     548 0896  75 E8					jnz		
+						p2_grid_y 
+     549				 
+     550 0898  07					pop		
+						es 
+     551 0899  5E					pop		
+						si 
+     552 089A  5A					pop		
+						dx 
+     553 089B  59					pop		
+						cx 
+     554 089C  5B					pop		
+						bx 
+     555 089D  58					pop		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-19
+
+
+						ax 
+     556 089E  C3					ret 
+     557 089F				draw_mini_grid endp 
+     558				 
+     559 089F				rotate proc 
+     560 089F  55					push		bp 
+     561 08A0  8B EC					mov		
+						bp, sp 
+     562 08A2  83 EC 0A					sub		
+						sp, 10 
+     563					;ss:[bp-4] = new coordinates_X 
+     564					;ss:[bp-8] = new coordinates_Y 
+     565					;ss:[bp-9] = new rotation 
+     566					;ss:[bp+4] = 1/2   ->   player1
+					/2 rotating 
+     567					;ss:[bp+5] = 1/-1   ->  right/l
+					eft 
+     568 08A5  66| 50					push		eax 
+     569 08A7  53					push		bx 
+     570 08A8  51					push		cx 
+     571 08A9  52					push		dx 
+     572 08AA  57					push		di 
+     573 08AB  56					push		si 
+     574				 
+     575 08AC  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+     576 08B0  0F 85 08BD R				jne		
+						p2_rotating 
+     577 08B4  BB 026E R				mov		
+						bx, offset p1_shape_X 
+     578 08B7  BE 00CA R				mov		
+						si, offset p1_board 
+     579 08BA  EB 07 90					jmp		
+						start_rotating 
+     580 08BD				p2_rotating: 
+     581 08BD  BB 0447 R				mov		
+						bx, offset p2_shape_X 
+     582 08C0  BE 02A3 R				mov		
+						si, offset p2_board 
+     583 08C3				start_rotating: 
+     584					; rotating in a nutshell: 
+     585					; what is the shape? 
+     586					; how is it rotated now? 
+     587					; remember the offset of coordi
+					nates of new rotated shape (and also th
+					e step of rotation) 
+     588					; add current shape offset and 
+					check if rotation doesn't hit any tiles
+					 
+     589					; if no, update coordinates to 
+					new rotated ones 
+     590					; 200 lines, thank you, probabl
+					y (definitely) could be (much) fewer  
+     591 08C3  2E: 80 BF FE5A 00			cmp		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-20
+
+
+						byte ptr cs:[bx-422], 0 
+     592 08C9  0F 84 0A17 R				je		
+						rotating_I 
+     593 08CD  2E: 80 BF FE5A 01			cmp		
+						byte ptr cs:[bx-422], 1	
+						; O shape, exit function 
+     594 08D3  0F 84 0AC3 R				je		
+						cant_rotate 
+     595 08D7  2E: 80 BF FE5A 02			cmp		
+						byte ptr cs:[bx-422], 2 
+     596 08DD  0F 84 09A9 R				je		
+						rotating_T 
+     597 08E1  2E: 80 BF FE5A 03			cmp		
+						byte ptr cs:[bx-422], 3 
+     598 08E7  0F 84 096D R				je		
+						rotating_L 
+     599 08EB  2E: 80 BF FE5A 04			cmp		
+						byte ptr cs:[bx-422], 4 
+     600 08F1  0F 84 09E5 R				je		
+						rotating_Z 
+     601 08F5  2E: 80 BF FE5A 05			cmp		
+						byte ptr cs:[bx-422], 5 
+     602 08FB  0F 84 0931 R				je		
+						rotating_J 
+     603						;cmp		
+						byte ptr cs:[bx-422], 6 
+     604						;je		
+						rotating_S 
+     605				;rotating_S: 
+     606 08FF  2E: 80 BF FE5B 00			cmp		
+						byte ptr cs:[bx-421], 0	
+						; what is current rotation stat
+					e 
+     607 0905  0F 85 0913 R				jne		
+						rotating_S_1 
+     608				;rotating_S_0: 
+     609 0909  BF 0004					mov		
+						di, 4 
+     610 090C  C6 46 F7 01				mov		
+						byte ptr ss:[bp-9], 1 
+     611 0910  EB 08 90					jmp		
+						set_S_coordinates 
+     612 0913				rotating_S_1: 
+     613 0913  BF 0000					mov		
+						di, 0 
+     614 0916  C6 46 F7 00				mov		
+						byte ptr ss:[bp-9], 0 
+     615 091A				set_S_coordinates: 
+     616 091A  2E: 66| 8B 85 0090 R			mov		
+						eax, cs:[shape_S_X+di] 
+     617 0920  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     618 0924  2E: 66| 8B 85 0098 R			mov		
+						eax, cs:[shape_S_Y+di] 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-21
+
+
+     619 092A  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     620 092E  E9 0A49 R				jmp		
+						add_shape_offset 
+     621						 
+     622 0931				rotating_J: 
+     623 0931  8A 46 05					mov		
+						al, ss:[bp+5] 
+     624 0934  2E: 02 87 FE5B				add		
+						al, byte ptr cs:[bx-421] 
+     625 0939  3C FF					cmp		
+						al, -1 
+     626 093B  0F 85 0944 R				jne		
+						check_if_J_rotation_overflow 
+     627 093F  B0 03					mov		
+						al, 3 
+     628 0941  EB 09 90					jmp		
+						J_rotation_is_set 
+     629 0944				check_if_J_rotation_overflow: 
+     630 0944  3C 04					cmp		
+						al, 4 
+     631 0946  0F 85 094C R				jne		
+						J_rotation_is_set 
+     632 094A  B0 00					mov		
+						al, 0 
+     633 094C				J_rotation_is_set: 
+     634 094C  88 46 F7					mov		
+						byte ptr ss:[bp-9], al 
+     635 094F  0F B6 7E F7				movzx		di, byt
+					e ptr ss:[bp-9] 
+     636 0953  C1 E7 02					shl		
+						di, 2 
+     637 0956  2E: 66| 8B 85 0070 R			mov		
+						eax, cs:[shape_J_X+di] 
+     638 095C  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     639 0960  2E: 66| 8B 85 0080 R			mov		
+						eax, cs:[shape_J_Y+di] 
+     640 0966  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     641 096A  E9 0A49 R				jmp		
+						add_shape_offset	
+						 
+     642 096D				rotating_L: 
+     643 096D  8A 46 05					mov		
+						al, ss:[bp+5] 
+     644 0970  2E: 02 87 FE5B				add		
+						al, byte ptr cs:[bx-421] 
+     645 0975  3C FF					cmp		
+						al, -1 
+     646 0977  0F 85 0980 R				jne		
+						check_if_L_rotation_overflow 
+     647 097B  B0 03					mov		
+						al, 3 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-22
+
+
+     648 097D  EB 09 90					jmp		
+						L_rotation_is_set 
+     649 0980				check_if_L_rotation_overflow: 
+     650 0980  3C 04					cmp		
+						al, 4 
+     651 0982  0F 85 0988 R				jne		
+						L_rotation_is_set 
+     652 0986  B0 00					mov		
+						al, 0 
+     653 0988				L_rotation_is_set: 
+     654 0988  88 46 F7					mov		
+						byte ptr ss:[bp-9], al 
+     655 098B  0F B6 7E F7				movzx		di, byt
+					e ptr ss:[bp-9] 
+     656 098F  C1 E7 02					shl		
+						di, 2 
+     657 0992  2E: 66| 8B 85 0050 R			mov		
+						eax, cs:[shape_L_X+di] 
+     658 0998  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     659 099C  2E: 66| 8B 85 0060 R			mov		
+						eax, cs:[shape_L_Y+di] 
+     660 09A2  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     661 09A6  E9 0A49 R				jmp		
+						add_shape_offset 
+     662 09A9				rotating_T: 
+     663 09A9  8A 46 05					mov		
+						al, ss:[bp+5] 
+     664 09AC  2E: 02 87 FE5B				add		
+						al, byte ptr cs:[bx-421] 
+     665 09B1  3C FF					cmp		
+						al, -1 
+     666 09B3  0F 85 09BC R				jne		
+						check_if_T_rotation_overflow 
+     667 09B7  B0 03					mov		
+						al, 3 
+     668 09B9  EB 09 90					jmp		
+						T_rotation_is_set 
+     669 09BC				check_if_T_rotation_overflow: 
+     670 09BC  3C 04					cmp		
+						al, 4 
+     671 09BE  0F 85 09C4 R				jne		
+						T_rotation_is_set 
+     672 09C2  B0 00					mov		
+						al, 0 
+     673 09C4				T_rotation_is_set: 
+     674 09C4  88 46 F7					mov		
+						byte ptr ss:[bp-9], al 
+     675 09C7  0F B6 7E F7				movzx		di, byt
+					e ptr ss:[bp-9] 
+     676 09CB  C1 E7 02					shl		
+						di, 2 
+     677 09CE  2E: 66| 8B 85 0030 R			mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-23
+
+
+						eax, cs:[shape_T_X+di] 
+     678 09D4  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     679 09D8  2E: 66| 8B 85 0040 R			mov		
+						eax, cs:[shape_T_Y+di] 
+     680 09DE  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     681 09E2  EB 65 90					jmp		
+						add_shape_offset 
+     682 09E5				rotating_Z: 
+     683 09E5  2E: 80 BF FE5B 00			cmp		
+						byte ptr cs:[bx-421], 0 
+     684 09EB  0F 85 09F9 R				jne		
+						rotating_Z_1 
+     685				;rotating_Z_0: 
+     686 09EF  BF 0004					mov		
+						di, 4 
+     687 09F2  C6 46 F7 01				mov		
+						byte ptr ss:[bp-9], 1 
+     688 09F6  EB 08 90					jmp		
+						set_Z_coordinates 
+     689 09F9				rotating_Z_1: 
+     690 09F9  BF 0000					mov		
+						di, 0 
+     691 09FC  C6 46 F7 00				mov		
+						byte ptr ss:[bp-9], 0 
+     692 0A00				set_Z_coordinates: 
+     693 0A00  2E: 66| 8B 85 00A0 R			mov		
+						eax, cs:[shape_Z_X+di] 
+     694 0A06  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     695 0A0A  2E: 66| 8B 85 00A8 R			mov		
+						eax, cs:[shape_Z_Y+di] 
+     696 0A10  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     697 0A14  EB 33 90					jmp		
+						add_shape_offset 
+     698 0A17				rotating_I: 
+     699 0A17  2E: 80 BF FE5B 00			cmp		
+						byte ptr cs:[bx-421], 0 
+     700 0A1D  0F 85 0A2B R				jne		
+						rotating_I_1 
+     701				;rotating_I_0: 
+     702 0A21  BF 0004					mov		
+						di, 4 
+     703 0A24  C6 46 F7 01				mov		
+						byte ptr ss:[bp-9], 1 
+     704 0A28  EB 08 90					jmp		
+						set_I_coordinates 
+     705 0A2B				rotating_I_1: 
+     706 0A2B  BF 0000					mov		
+						di, 0 
+     707 0A2E  C6 46 F7 00				mov		
+						byte ptr ss:[bp-9], 0 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-24
+
+
+     708 0A32				set_I_coordinates: 
+     709 0A32  2E: 66| 8B 85 0020 R			mov		
+						eax, cs:[shape_I_X+di] 
+     710 0A38  66| 89 46 FC				mov		
+						ss:[bp-4], eax 
+     711 0A3C  2E: 66| 8B 85 0028 R			mov		
+						eax, cs:[shape_I_Y+di] 
+     712 0A42  66| 89 46 F8				mov		
+						ss:[bp-8], eax 
+     713 0A46  EB 01 90					jmp		
+						add_shape_offset 
+     714 0A49				add_shape_offset: 
+     715 0A49  BF 0004					mov		
+						di, 4 
+     716 0A4C  2E: 8A 07				mov		
+						al, cs:[bx] 
+     717 0A4F  2E: 8A 67 01				mov		
+						ah, cs:[bx+1] 
+     718 0A53						adding_shape_offset_loo
+					p: 
+     719 0A53  00 43 FB					add		
+						ss:[bp+di-5], al	
+							; increase new coordina
+					te X 
+     720 0A56  00 63 F7					add		
+						ss:[bp+di-9], ah	
+							; increase new coordina
+					te Y 
+     721 0A59  80 7B FB 00				cmp		
+						byte ptr ss:[bp+di-5], 0
+						; if x<0 or x>9 
+     722 0A5D  0F 82 0AC3 R				jb		
+						cant_rotate 
+     723 0A61  80 7B FB 0A				cmp		
+						byte ptr ss:[bp+di-5], 10 
+     724 0A65  0F 83 0AC3 R				jae		
+						cant_rotate 
+     725 0A69  80 7B F7 15				cmp		
+						byte ptr ss:[bp+di-9], 21 
+     726 0A6D  0F 83 0AC3 R				jae		
+						cant_rotate 
+     727 0A71  83 EF 01					sub		
+						di, 1 
+     728 0A74  75 DD					jnz		
+						adding_shape_offset_loop 
+     729				 
+     730 0A76  BF 0004					mov		
+						di, 4 
+     731 0A79				checking_if_can_rotate: 
+     732 0A79  0F B6 43 F7				movzx		ax, byt
+					e ptr ss:[bp+di-9] 
+     733 0A7D  B1 0A					mov		
+						cl, 10 
+     734 0A7F  F6 E1					mul		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-25
+
+
+						cl 
+     735 0A81  8A 4B FB					mov		
+						cl, ss:[bp+di-5] 
+     736 0A84  03 C1					add		
+						ax, cx 
+     737 0A86  D1 E0					shl		
+						ax, 1 
+     738 0A88  93					xchg		ax, bx 
+     739 0A89  2E: 83 38 00				cmp		
+						word ptr cs:[si+bx], 0 
+     740 0A8D  93					xchg		ax, bx 
+     741 0A8E  0F 85 0AC3 R				jne		
+						cant_rotate 
+     742 0A92  83 EF 01					sub		
+						di, 1 
+     743 0A95  75 E2					jnz		
+						checking_if_can_rotate 
+     744				;can_rotate: 
+     745 0A97  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     746 0A9A  E8 0F43 R				call		erase_s
+					hape 
+     747 0A9D  83 C4 02					add		
+						sp, 2 
+     748				 
+     749 0AA0  8A 46 F7					mov		
+						al, ss:[bp-9] 
+     750 0AA3  2E: 88 87 FE5B				mov		
+						cs:[bx-421], al 
+     751 0AA8  66| 8B 46 FC				mov		
+						eax, ss:[bp-4] 
+     752 0AAC  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+     753 0AB1  66| 8B 46 F8				mov		
+						eax, ss:[bp-8] 
+     754 0AB5  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+     755				 
+     756 0ABA  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     757 0ABD  E8 0DC5 R				call		draw_sh
+					ape 
+     758 0AC0  83 C4 02					add		
+						sp, 2 
+     759 0AC3				cant_rotate: 
+     760 0AC3  5E					pop		
+						si 
+     761 0AC4  5F					pop		
+						di 
+     762 0AC5  5A					pop		
+						dx 
+     763 0AC6  59					pop		
+						cx 
+     764 0AC7  5B					pop		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-26
+
+
+						bx 
+     765 0AC8  66| 58					pop		
+						eax 
+     766 0ACA  83 C4 0A					add		
+						sp, 10 
+     767 0ACD  5D					pop		
+						bp 
+     768 0ACE  C3					ret 
+     769 0ACF				rotate endp 
+     770				 
+     771 0ACF				move_right proc 
+     772 0ACF  55					push		bp 
+     773 0AD0  8B EC					mov		
+						bp, sp 
+     774					;ss:[bp+4] = 1/2   ->   player1
+					/2 falling 
+     775 0AD2  50					push		ax 
+     776 0AD3  53					push		bx 
+     777 0AD4  51					push		cx 
+     778 0AD5  56					push		si 
+     779 0AD6  57					push		di 
+     780 0AD7  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+     781 0ADB  0F 85 0AE8 R				jnz		
+						moving_right_for_p2 
+     782 0ADF  BB 0270 R				mov		
+						bx, offset p1_tiles_X 
+     783 0AE2  BE 00CA R				mov		
+						si, offset p1_board 
+     784 0AE5  EB 07 90					jmp		
+						start_moving_right 
+     785 0AE8				moving_right_for_p2:	 
+     786 0AE8  BB 0449 R				mov		
+						bx, offset p2_tiles_X 
+     787 0AEB  BE 02A3 R				mov		
+						si, offset p2_board 
+     788 0AEE				start_moving_right: 
+     789 0AEE  BF 0004					mov		
+						di, 4 
+     790 0AF1				check_if_hit_right_wall: 
+     791 0AF1  2E: 80 79 FF 09				cmp		
+						byte ptr cs:[bx+di-1], 9
+							; x3 == 9?, x2 == 9?, x
+					1 == 9?, x0 == 9? 
+     792 0AF6  0F 84 0B53 R				je		
+						the_end_of_moving_right 
+     793 0AFA  83 EF 01					sub		
+						di, 1 
+     794 0AFD  75 F2					jnz		
+						check_if_hit_right_wall 
+     795				 
+     796 0AFF  BF 0004					mov		
+						di, 4 
+     797 0B02				check_if_hit_right_tile: 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-27
+
+
+     798 0B02  2E: 0F B6 41 03				movzx		ax, byt
+					e ptr cs:[bx+di+3]		; board
+					[x+1][y] = board[10*y + x+1]. ax=10*y+x
+					+1 
+     799 0B07  B1 0A					mov		
+						cl, 10 
+     800 0B09  F6 E1					mul		
+						cl 
+     801 0B0B  2E: 8A 49 FF				mov		
+						cl, cs:[bx+di-1] 
+     802 0B0F  FE C1					inc		
+						cl 
+     803 0B11  02 C1					add		
+						al, cl 
+     804 0B13  D1 E0					shl		
+						ax, 1			
+									; multi
+					ply ax (board array index) * 2, because
+					 board values are 16 bit 
+     805 0B15  93					xchg		ax, bx 
+     806 0B16  2E: 83 38 00				cmp		
+						word ptr cs:[si+bx], 0 
+     807 0B1A  93					xchg		ax, bx 
+     808 0B1B  0F 85 0B4E R				jne		
+						other_pieces_are_blocking_right
+					 
+     809 0B1F  83 EF 01					sub		
+						di, 1 
+     810 0B22  75 DE					jnz		
+						check_if_hit_right_tile 
+     811				 
+     812 0B24  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     813 0B27  E8 0F43 R				call		erase_s
+					hape 
+     814 0B2A  83 C4 02					add		
+						sp, 2 
+     815				 
+     816 0B2D  BF 0004					mov		
+						di, 4 
+     817 0B30				move_piece_right: 
+     818 0B30  2E: FE 41 FF				inc		
+						byte ptr cs:[bx+di-1] 
+     819 0B34  83 EF 01					sub		
+						di, 1 
+     820 0B37  75 F7					jnz		
+						move_piece_right 
+     821 0B39  2E: FE 47 FE				inc		
+						byte ptr cs:[bx-2]	
+							; shape_X++ 
+     822				 
+     823 0B3D  2E: 80 44 FD 02				add		
+						byte ptr cs:[si-3], 2	
+							; add delay, 2;   you c
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-28
+
+
+					an move 1 step per 2 frames 
+     824				 
+     825 0B42  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     826 0B45  E8 0DC5 R				call		draw_sh
+					ape 
+     827 0B48  83 C4 02					add		
+						sp, 2 
+     828 0B4B  EB 06 90					jmp		
+						the_end_of_moving_right 
+     829 0B4E				other_pieces_are_blocking_right: 
+     830 0B4E  2E: C6 44 FD 00				mov		
+						byte ptr cs:[si-3], 0	
+							; mov delay, 0;   allow
+					s you to make tucks easier 
+     831 0B53				the_end_of_moving_right: 
+     832				 
+     833 0B53  5F					pop		
+						di 
+     834 0B54  5E					pop		
+						si 
+     835 0B55  59					pop		
+						cx 
+     836 0B56  5B					pop		
+						bx 
+     837 0B57  58					pop		
+						ax 
+     838 0B58  5D					pop		
+						bp 
+     839 0B59  C3					ret 
+     840 0B5A				move_right endp 
+     841 0B5A				move_left proc 
+     842 0B5A  55					push		bp 
+     843 0B5B  8B EC					mov		
+						bp, sp 
+     844					;ss:[bp+4] = 1/2   ->   player1
+					/2 falling 
+     845 0B5D  50					push		ax 
+     846 0B5E  53					push		bx 
+     847 0B5F  51					push		cx 
+     848 0B60  56					push		si 
+     849 0B61  57					push		di 
+     850				 
+     851 0B62  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+     852 0B66  0F 85 0B73 R				jnz		
+						moving_left_for_p2 
+     853 0B6A  BB 0270 R				mov		
+						bx, offset p1_tiles_X 
+     854 0B6D  BE 00CA R				mov		
+						si, offset p1_board 
+     855 0B70  EB 07 90					jmp		
+						start_moving_left 
+     856 0B73				moving_left_for_p2:	 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-29
+
+
+     857 0B73  BB 0449 R				mov		
+						bx, offset p2_tiles_X 
+     858 0B76  BE 02A3 R				mov		
+						si, offset p2_board 
+     859 0B79				start_moving_left: 
+     860 0B79  BF 0004					mov		
+						di, 4 
+     861 0B7C				check_if_hit_left_wall: 
+     862 0B7C  2E: 80 79 FF 00				cmp		
+						byte ptr cs:[bx+di-1], 0 
+     863 0B81  0F 84 0BDE R				je		
+						the_end_of_moving_left 
+     864 0B85  83 EF 01					sub		
+						di, 1 
+     865 0B88  75 F2					jnz		
+						check_if_hit_left_wall 
+     866				 
+     867 0B8A  BF 0004					mov		
+						di, 4 
+     868 0B8D				check_if_hit_left_tile: 
+     869 0B8D  2E: 0F B6 41 03				movzx		ax, byt
+					e ptr cs:[bx+di+3] 
+     870 0B92  B1 0A					mov		
+						cl, 10 
+     871 0B94  F6 E1					mul		
+						cl 
+     872 0B96  2E: 8A 49 FF				mov		
+						cl, cs:[bx+di-1] 
+     873 0B9A  FE C9					dec		
+						cl 
+     874 0B9C  02 C1					add		
+						al, cl 
+     875 0B9E  D1 E0					shl		
+						ax, 1 
+     876 0BA0  93					xchg		ax, bx 
+     877 0BA1  2E: 83 38 00				cmp		
+						word ptr cs:[si+bx], 0 
+     878 0BA5  93					xchg		ax, bx 
+     879 0BA6  0F 85 0BD9 R				jne		
+						other_pieces_are_blocking_left 
+     880 0BAA  83 EF 01					sub		
+						di, 1 
+     881 0BAD  75 DE					jnz		
+						check_if_hit_left_tile 
+     882						 
+     883 0BAF  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     884 0BB2  E8 0F43 R				call		erase_s
+					hape 
+     885 0BB5  83 C4 02					add		
+						sp, 2 
+     886				 
+     887 0BB8  BF 0004					mov		
+						di, 4 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-30
+
+
+     888 0BBB				move_piece_left: 
+     889 0BBB  2E: FE 49 FF				dec		
+						byte ptr cs:[bx+di-1] 
+     890 0BBF  83 EF 01					sub		
+						di, 1 
+     891 0BC2  75 F7					jnz		
+						move_piece_left 
+     892 0BC4  2E: FE 4F FE				dec		
+						byte ptr cs:[bx-2]	
+							; shape_X-- 
+     893				 
+     894 0BC8  2E: 80 44 FD 02				add		
+						byte ptr cs:[si-3], 2 
+     895						 
+     896 0BCD  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     897 0BD0  E8 0DC5 R				call		draw_sh
+					ape 
+     898 0BD3  83 C4 02					add		
+						sp, 2 
+     899 0BD6  EB 06 90					jmp		
+						the_end_of_moving_left 
+     900 0BD9				other_pieces_are_blocking_left: 
+     901 0BD9  2E: C6 44 FD 00				mov		
+						byte ptr cs:[si-3], 0 
+     902 0BDE				the_end_of_moving_left: 
+     903				 
+     904						 
+     905				 
+     906 0BDE  5F					pop		
+						di 
+     907 0BDF  5E					pop		
+						si 
+     908 0BE0  59					pop		
+						cx 
+     909 0BE1  5B					pop		
+						bx 
+     910 0BE2  58					pop		
+						ax 
+     911 0BE3  5D					pop		
+						bp 
+     912 0BE4  C3					ret 
+     913 0BE5  C3					ret 
+     914 0BE6				move_left endp 
+     915 0BE6				gravitation proc 
+     916 0BE6  55					push		bp 
+     917 0BE7  8B EC					mov		
+						bp, sp 
+     918					;ss:[bp+4] = 1/2   ->   player1
+					/2 falling 
+     919 0BE9  50					push		ax 
+     920 0BEA  53					push		bx 
+     921 0BEB  51					push		cx 
+     922 0BEC  56					push		si 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-31
+
+
+     923 0BED  57					push		di 
+     924						 
+     925 0BEE  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     926 0BF1  E8 0F43 R				call		erase_s
+					hape 
+     927 0BF4  83 C4 02					add		
+						sp, 2 
+     928				 
+     929 0BF7  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+     930 0BFB  0F 85 0C0E R				jnz		
+						gravitation_for_p2 
+     931 0BFF  BB 0270 R				mov		
+						bx, offset cs:p1_tiles_X 
+     932 0C02  BE 00CA R				mov		
+						si, offset cs:p1_board 
+     933 0C05  2E: C6 06 0288 R 01			mov		
+						byte ptr cs:p1_can_move_D, 1 
+     934 0C0B  EB 0D 90					jmp		
+						start_gravitation 
+     935 0C0E				gravitation_for_p2:	 
+     936 0C0E  BB 0449 R				mov		
+						bx, offset cs:p2_tiles_X 
+     937 0C11  BE 02A3 R				mov		
+						si, offset cs:p2_board 
+     938 0C14  2E: C6 06 0461 R 01			mov		
+						byte ptr cs:p2_can_move_D, 1 
+     939 0C1A				start_gravitation: 
+     940 0C1A  BF 0004					mov		
+						di, 4 
+     941 0C1D				check_if_hit_bottom: 
+     942 0C1D  2E: 80 79 03 14				cmp		
+						byte ptr cs:[bx+di+3], 20
+								; tiles_Y[3], t
+					iles_Y[2], tiles_Y[1], tiles_Y[0] 
+     943 0C22  0F 84 0C63 R				je		
+						update_board_and_make_new_shape
+					 
+     944 0C26  83 EF 01					sub		
+						di, 1 
+     945 0C29  75 F2					jnz		
+						check_if_hit_bottom 
+     946				 
+     947 0C2B  BF 0004					mov		
+						di, 4 
+     948 0C2E				check_if_hit_tile: 
+     949 0C2E  2E: 0F B6 41 03				movzx		ax, byt
+					e ptr cs:[bx+di+3]		
+						; tiles_Y[3], tiles_Y[2], tiles
+					_Y[1], tiles_Y[0] 
+     950 0C33  FE C0					inc		
+						al 
+     951 0C35  B1 0A					mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-32
+
+
+						cl, 10 
+     952 0C37  F6 E1					mul		
+						cl 
+     953 0C39  2E: 8A 49 FF				mov		
+						cl, cs:[bx+di-1]	
+									; tiles
+					_X[3], ...[2], ...[1], ...[0] 
+     954 0C3D  02 C1					add		
+						al, cl 
+     955 0C3F  D1 E0					shl		
+						ax, 1			
+									
+						; *2 because word = 2 bytes 
+     956 0C41  93					xchg		ax, bx
+									
+									; bx = 
+					y*10 + x = tile index in 1D array 
+     957 0C42  2E: 83 38 00				cmp		
+						word ptr cs:[si+bx], 0	
+								; if 0 then the
+					re is nothing under this tile 
+     958 0C46  93					xchg		ax, bx 
+     959 0C47  0F 85 0C63 R				jne		
+						update_board_and_make_new_shape
+					 
+     960 0C4B  83 EF 01					sub		
+						di, 1 
+     961 0C4E  75 DE					jnz		
+						check_if_hit_tile 
+     962				 
+     963 0C50  BF 0004					mov		
+						di, 4			
+						; if you are here then piece wi
+					ll fall down 
+     964 0C53				move_piece_down: 
+     965 0C53  2E: FE 41 03				inc		
+						byte ptr cs:[bx+di+3] 
+     966 0C57  83 EF 01					sub		
+						di, 1 
+     967 0C5A  75 F7					jnz		
+						move_piece_down 
+     968 0C5C  2E: FE 47 FF				inc		
+						byte ptr cs:[bx-1]	
+							; shape_Y++ 
+     969 0C60  EB 4E 90					jmp		
+						gravitation_has_succeeded 
+     970				 
+     971 0C63				update_board_and_make_new_shape: 
+     972 0C63  2E: C6 47 18 00				mov		
+						byte ptr cs:[bx+24], 0	
+							; can_move_down 
+     973 0C68  2E: C6 87 FE50 00			mov		
+						byte ptr cs:[bx-432], 0	
+							; is_pressing_down 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-33
+
+
+     974 0C6E  2E: C6 44 FD 01				mov		
+						byte ptr cs:[si-3], 1	
+							; delay 0 
+     975 0C73  BF 0004					mov		
+						di, 4 
+     976 0C76				engraving_the_boad_array: 
+     977 0C76  2E: 0F B6 41 03				movzx		ax, byt
+					e ptr cs:[bx+di+3]		
+						; tiles_Y[3], tiles_Y[2], tiles
+					_Y[1], tiles_Y[0] 
+     978 0C7B  B1 0A					mov		
+						cl, 10 
+     979 0C7D  F6 E1					mul		
+						cl 
+     980 0C7F  2E: 8A 49 FF				mov		
+						cl, cs:[bx+di-1]	
+									; tiles
+					_X[3], ...[2], ...[1], ...[0] 
+     981 0C83  02 C1					add		
+						al, cl 
+     982 0C85  D1 E0					shl		
+						ax, 1 
+     983 0C87  93					xchg		ax, bx
+									
+									; bx = 
+					y*10 + x = tile index in 1D array 
+     984 0C88  2E: 8B 4C FB				mov		
+						cx, cs:[si-5]		
+									; tile_
+					color 
+     985 0C8C  2E: 89 08				mov		
+						cs:[si+bx], cx	 
+     986 0C8F  93					xchg		ax, bx 
+     987 0C90  83 EF 01					sub		
+						di, 1 
+     988 0C93  75 E1					jnz		
+						engraving_the_boad_array 
+     989				 
+     990 0C95  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     991 0C98  E8 0CFE R				call		clear_l
+					ines 
+     992 0C9B  83 C4 02					add		
+						sp, 2 
+     993 0C9E  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     994 0CA1  E8 10F9 R				call		draw_bo
+					ard 
+     995 0CA4  83 C4 02					add		
+						sp, 2 
+     996 0CA7  FF 76 04					push		word pt
+					r ss:[bp+4] 
+     997 0CAA  E8 0F8C R				call		make_ne
+					w_shape 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-34
+
+
+     998 0CAD  83 C4 02					add		
+						sp, 2 
+     999 0CB0				gravitation_has_succeeded: 
+    1000						 
+    1001 0CB0  FF 76 04					push		word pt
+					r ss:[bp+4] 
+    1002 0CB3  E8 0DC5 R				call		draw_sh
+					ape 
+    1003 0CB6  83 C4 02					add		
+						sp, 2 
+    1004				 
+    1005 0CB9  5F					pop		
+						di 
+    1006 0CBA  5E					pop		
+						si 
+    1007 0CBB  59					pop		
+						cx 
+    1008 0CBC  5B					pop		
+						bx 
+    1009 0CBD  58					pop		
+						ax 
+    1010 0CBE  5D					pop		
+						bp 
+    1011 0CBF  C3					ret 
+    1012 0CC0				gravitation endp 
+    1013				 
+    1014 0CC0				clear_boards proc 
+    1015 0CC0  50					push		ax 
+    1016 0CC1  53					push		bx 
+    1017 0CC2  51					push		cx 
+    1018				 
+    1019 0CC3  B0 02					mov		
+						al, 2 
+    1020 0CC5  BB 0000					mov		
+						bx, 0 
+    1021 0CC8				clear_boards_set_BX: 
+    1022 0CC8  3C 02					cmp		
+						al, 2 
+    1023 0CCA  0F 85 0CD4 R				jne		
+						clear_p2_board 
+    1024 0CCE  BB 00CA R				mov		
+						bx, offset cs:p1_board 
+    1025 0CD1  EB 04 90					jmp		
+						begin_clearing_board 
+    1026 0CD4				clear_p2_board: 
+    1027 0CD4  BB 02A3 R				mov		
+						bx, offset cs:p2_board 
+    1028 0CD7				begin_clearing_board: 
+    1029 0CD7  B9 00D2					mov		
+						cx, 210 
+    1030 0CDA				clear_boards_loop: 
+    1031 0CDA  2E: C7 07 0000				mov		
+						word ptr cs:[bx], 0 
+    1032 0CDF  83 C3 02					add		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-35
+
+
+						bx, 2 
+    1033 0CE2  E2 F6					loop		clear_b
+					oards_loop 
+    1034 0CE4  2C 01					sub		
+						al, 1 
+    1035 0CE6  75 E0					jnz		
+						clear_boards_set_BX 
+    1036				 
+    1037 0CE8  68 0001					push		word pt
+					r 1 
+    1038 0CEB  E8 10F9 R				call		draw_bo
+					ard 
+    1039 0CEE  83 C4 02					add		
+						sp, 2 
+    1040 0CF1  68 0002					push		word pt
+					r 2 
+    1041 0CF4  E8 10F9 R				call		draw_bo
+					ard 
+    1042 0CF7  83 C4 02					add		
+						sp, 2 
+    1043 0CFA  59					pop		
+						cx 
+    1044 0CFB  5B					pop		
+						bx 
+    1045 0CFC  58					pop		
+						ax 
+    1046 0CFD  C3					ret 
+    1047 0CFE				clear_boards endp 
+    1048				 
+    1049 0CFE				clear_lines proc 
+    1050 0CFE  55					push		bp 
+    1051 0CFF  8B EC					mov		
+						bp, sp 
+    1052					;ss:[bp+4] = 1/2 -> p1/p2_board
+					 
+    1053 0D01  50					push		ax 
+    1054 0D02  53					push		bx 
+    1055 0D03  56					push		si 
+    1056 0D04  57					push		di 
+    1057						 
+    1058 0D05  B0 00					mov		
+						al, 0			
+						; if al = 1 then line was clear
+					ed 
+    1059 0D07  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1060 0D0B  0F 85 0D15 R				jne		
+						clear_p2_lines 
+    1061 0D0F  BB 00CA R				mov		
+						bx, offset cs:p1_board 
+    1062 0D12  EB 04 90					jmp		
+						start_clearing_lines 
+    1063 0D15				clear_p2_lines: 
+    1064 0D15  BB 02A3 R				mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-36
+
+
+						bx, offset cs:p2_board 
+    1065 0D18				start_clearing_lines: 
+    1066 0D18  BF 0014					mov		
+						di, 20			; dont 
+					check top line (which is 21th, only to 
+					be equal to zero). thats why offset fro
+					m start = 20 = width*sizeof(bo
+    1067 0D1B				look_for_lines_to_clear: 
+    1068 0D1B  B9 000A					mov		
+						cx, 10 
+    1069 0D1E				check_if_should_clear_line:	; here 
+					di%20 = 0. it's the beginning of line 
+    1070 0D1E  2E: 83 39 00				cmp		
+						word ptr cs:[bx+di], 0 
+    1071 0D22  0F 84 0D2B R				je		
+						checked_if_should_clear 
+    1072 0D26  83 C7 02					add		
+						di, 2 
+    1073 0D29  E2 F3					loop		check_i
+					f_should_clear_line 
+    1074 0D2B				checked_if_should_clear: 
+    1075 0D2B  83 F9 00					cmp		
+						cx, 0 
+    1076 0D2E  0F 84 0D39 R				je		
+						clear_the_line 
+    1077 0D32  D1 E1					shl		
+						cx, 1 
+    1078 0D34  03 F9					add		
+						di, cx 
+    1079 0D36  EB 17 90					jmp		
+						look_for_lines_loop_end 
+    1080 0D39				clear_the_line: 
+    1081 0D39  8B F7					mov		
+						si, di 
+    1082 0D3B  83 EE 02					sub		
+						si, 2 
+    1083 0D3E				clear_the_line_loop: 
+    1084 0D3E  2E: 8B 40 EC				mov		
+						ax, cs:[bx+si-20] 
+    1085 0D42  2E: 89 00				mov		
+						cs:[bx+si], ax 
+    1086 0D45  83 EE 02					sub		
+						si, 2 
+    1087 0D48  83 FE 12					cmp		
+						si, 18 
+    1088 0D4B  77 F1					ja		
+						clear_the_line_loop 
+    1089 0D4D  B0 01					mov		
+						al, 1 
+    1090 0D4F				look_for_lines_loop_end: 
+    1091 0D4F  81 FF 01A4				cmp		
+						di, 420 
+    1092 0D53  72 C6					jb		
+						look_for_lines_to_clear 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-37
+
+
+    1093				 
+    1094 0D55  3C 01					cmp		
+						al, 1 
+    1095 0D57  0F 85 0D68 R				jne		
+						no_lines_cleared 
+    1096 0D5B  2E: 8A 87 01B6				mov		
+						al, cs:[bx+438]		; if cl
+					eared line, then speed_step = 4*speed 
+    1097 0D60  C0 E0 02					shl		
+						al, 2			
+						; because if you score point yo
+					u also get time to think  
+    1098 0D63  2E: 88 87 01B7				mov		
+						cs:[bx+439], al 
+    1099 0D68				no_lines_cleared: 
+    1100				 
+    1101 0D68  5F					pop		
+						di 
+    1102 0D69  5E					pop		
+						si 
+    1103 0D6A  5B					pop		
+						bx 
+    1104 0D6B  58					pop		
+						ax 
+    1105 0D6C  5D					pop		
+						bp 
+    1106 0D6D  C3					ret 
+    1107 0D6E				clear_lines endp 
+    1108				 
+    1109 0D6E				map_coordinates_to_pixel_positions proc
+					 
+    1110 0D6E  55					push		bp 
+    1111 0D6F  8B EC					mov		
+						bp, sp 
+    1112					;ss:[bp+4] = 1/2 -> coordinates
+					 of player1/2 
+    1113 0D71  50					push		ax 
+    1114 0D72  53					push		bx 
+    1115 0D73  51					push		cx 
+    1116 0D74  52					push		dx 
+    1117 0D75  57					push		di 
+    1118 0D76  56					push		si 
+    1119						 
+    1120 0D77  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1121 0D7B  0F 85 0D8D R				jne		
+						coordinates_of_p2 
+    1122 0D7F  BB 0270 R				mov		
+						bx, offset cs:p1_tiles_X 
+    1123 0D82  BF 0278 R				mov		
+						di, offset cs:p1_pixel_position
+					s 
+    1124 0D85  2E: 8B 36 00B2 R				mov		
+						si, cs:p1_top_left 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-38
+
+
+    1125 0D8A  EB 0C 90					jmp		
+						begin_mapping 
+    1126 0D8D				coordinates_of_p2: 
+    1127 0D8D  BB 0449 R				mov		
+						bx, offset cs:p2_tiles_X 
+    1128 0D90  BF 0451 R				mov		
+						di, offset cs:p2_pixel_position
+					s 
+    1129 0D93  2E: 8B 36 028B R				mov		
+						si, cs:p2_top_left 
+    1130 0D98				begin_mapping: 
+    1131 0D98  B9 0004					mov		
+						cx, 4 
+    1132 0D9B				mapping_coordinates_loop: 
+    1133 0D9B  B8 0140					mov		
+						ax,	320		
+									; ax = 
+					320 
+    1134 0D9E  2E: 0F B6 57 04				movzx		dx, byt
+					e ptr cs:[bx+4] 
+    1135 0DA3  F7 E2					mul		
+						dx			
+									; ax = 
+					tiles_Y*320 
+    1136 0DA5  2E: 0F B6 17				movzx		dx, byt
+					e ptr cs:[bx] 
+    1137 0DA9  03 C2					add		
+						ax, dx			
+								; ax = tiles_Y*
+					320 + tiles_X 
+    1138 0DAB  2E: 8B 16 0016 R				mov		
+						dx, cs:tile_size 
+    1139 0DB0  F7 E2					mul		
+						dx			
+									; ax = 
+					tiles_Y*tile_size*320 + tiles_X*tile_si
+					ze 
+    1140 0DB2  03 C6					add		
+						ax, si 
+    1141 0DB4  2E: 89 05				mov		
+						cs:[di], ax 
+    1142 0DB7  43					inc		
+						bx 
+    1143 0DB8  83 C7 02					add		
+						di, 2 
+    1144 0DBB  E2 DE					loop		mapping
+					_coordinates_loop 
+    1145				 
+    1146 0DBD  5E					pop		
+						si 
+    1147 0DBE  5F					pop		
+						di 
+    1148 0DBF  5A					pop		
+						dx 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-39
+
+
+    1149 0DC0  59					pop		
+						cx 
+    1150 0DC1  5B					pop		
+						bx 
+    1151 0DC2  58					pop		
+						ax 
+    1152 0DC3  5D					pop		
+						bp 
+    1153 0DC4  C3					ret 
+    1154 0DC5				map_coordinates_to_pixel_positions endp
+					 
+    1155 0DC5				draw_shape proc 
+    1156 0DC5  55					push		bp 
+    1157 0DC6  8B EC					mov		
+						bp, sp 
+    1158					;ss:[bp+4] = 1/2 -> shape of pl
+					ayer1/2 
+    1159 0DC8  50					push		ax 
+    1160 0DC9  53					push		bx 
+    1161 0DCA  51					push		cx 
+    1162 0DCB  56					push		si 
+    1163						 
+    1164 0DCC  FF 76 04					push		word pt
+					r ss:[bp+4] 
+    1165 0DCF  E8 0D6E R				call		map_coo
+					rdinates_to_pixel_positions 
+    1166 0DD2  83 C4 02					add		
+						sp, 2 
+    1167				 
+    1168 0DD5  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1169 0DD9  0F 85 0DEA R				jne		
+						draw_shape_p2 
+    1170 0DDD  BB 0278 R				mov		
+						bx, offset cs:p1_pixel_position
+					s 
+    1171 0DE0  BE 0274 R				mov		
+						si, offset cs:p1_tiles_Y 
+    1172 0DE3  2E: A1 00C5 R				mov		
+						ax, cs:p1_color 
+    1173 0DE7  EB 0B 90					jmp		
+						begin_drawing_shape 
+    1174 0DEA				draw_shape_p2: 
+    1175 0DEA  BB 0451 R				mov		
+						bx, offset cs:p2_pixel_position
+					s 
+    1176 0DED  BE 044D R				mov		
+						si, offset cs:p2_tiles_Y 
+    1177 0DF0  2E: A1 029E R				mov		
+						ax, cs:p2_color 
+    1178 0DF4				begin_drawing_shape: 
+    1179						 
+    1180 0DF4  B9 0004					mov		
+						cx, 4 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-40
+
+
+    1181 0DF7  2E: FF 0E 0016 R				dec		
+						word ptr cs:tile_size	; did i
+					t to have 1 pixel gap between everythin
+					g 
+    1182 0DFC				drawing_shape_loop: 
+    1183 0DFC  2E: 80 3C 00				cmp		
+						byte ptr cs:[si], 0 
+    1184 0E00  0F 84 0E0E R				je		
+						dont_draw_this_tile 
+    1185 0E04  2E: FF 37				push		word pt
+					r cs:[bx] 
+    1186 0E07  50					push		ax 
+    1187 0E08  E8 120C R				call		draw_sq
+					uare 
+    1188 0E0B  83 C4 04					add		
+						sp, 4 
+    1189 0E0E				dont_draw_this_tile: 
+    1190 0E0E  46					inc		
+						si 
+    1191 0E0F  83 C3 02					add		
+						bx, 2 
+    1192 0E12  E2 E8					loop		drawing
+					_shape_loop 
+    1193 0E14  2E: FF 06 0016 R				inc		
+						word ptr cs:tile_size 
+    1194				 
+    1195 0E19  5E					pop		
+						si 
+    1196 0E1A  59					pop		
+						cx 
+    1197 0E1B  5B					pop		
+						bx 
+    1198 0E1C  58					pop		
+						ax 
+    1199 0E1D  5D					pop		
+						bp 
+    1200 0E1E  C3					ret 
+    1201 0E1F				draw_shape endp 
+    1202 0E1F				draw_next_shape proc 
+    1203 0E1F  55					push		bp 
+    1204 0E20  8B EC					mov		
+						bp, sp 
+    1205 0E22  83 EC 02					sub		
+						sp, 2 
+    1206					;ss:[bp-2] = next shape color 
+    1207					;ss:[bp+4] = 1/2 -> shape of pl
+					ayer1/2 
+    1208 0E25  50					push		ax 
+    1209 0E26  53					push		bx 
+    1210 0E27  51					push		cx 
+    1211 0E28  52					push		dx 
+    1212 0E29  56					push		si 
+    1213 0E2A  57					push		di 
+    1214				 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-41
+
+
+    1215 0E2B  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1216 0E2F  0F 85 0E3F R				jne		
+						next_shape_of_p2 
+    1217 0E33  2E: A0 0287 R				mov		
+						al, cs:p1_next_shape 
+    1218 0E37  2E: 8B 1E 00B0 R				mov		
+						bx, cs:p1_top_left_next 
+    1219 0E3C  EB 0A 90					jmp		
+						start_drawing_next_shape 
+    1220 0E3F				next_shape_of_p2: 
+    1221 0E3F  2E: A0 0460 R				mov		
+						al, cs:p2_next_shape 
+    1222 0E43  2E: 8B 1E 0289 R				mov		
+						bx, cs:p2_top_left_next 
+    1223 0E48				start_drawing_next_shape: 
+    1224				 
+    1225 0E48  3C 00					cmp		
+						al, 0 
+    1226 0E4A  0F 84 0ED2 R				je		
+						next_shape_I 
+    1227 0E4E  3C 01					cmp		
+						al, 1 
+    1228 0E50  0F 84 0EC1 R				je		
+						next_shape_O 
+    1229 0E54  3C 02					cmp		
+						al, 2 
+    1230 0E56  0F 84 0EB0 R				je		
+						next_shape_T 
+    1231 0E5A  3C 03					cmp		
+						al, 3 
+    1232 0E5C  0F 84 0E9F R				je		
+						next_shape_L 
+    1233 0E60  3C 04					cmp		
+						al, 4 
+    1234 0E62  0F 84 0E8E R				je		
+						next_shape_Z 
+    1235 0E66  3C 05					cmp		
+						al, 5 
+    1236 0E68  0F 84 0E7D R				je		
+						next_shape_J 
+    1237				;next_shape_S:	 
+    1238 0E6C  2E: 8B 16 0012 R				mov		
+						dx, cs:[colors+4] 
+    1239 0E71  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1240 0E74  BE 0090 R				mov		
+						si, offset cs:shape_S_X 
+    1241 0E77  BF 0098 R				mov		
+						di, offset cs:shape_S_Y 
+    1242 0E7A  EB 67 90					jmp		
+						next_shape_map_coordinates 
+    1243 0E7D				next_shape_J: 
+    1244 0E7D  2E: 8B 16 0012 R				mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-42
+
+
+						dx, cs:[colors+4] 
+    1245 0E82  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1246 0E85  BE 0070 R				mov		
+						si, offset cs:shape_J_X 
+    1247 0E88  BF 0080 R				mov		
+						di, offset cs:shape_J_Y 
+    1248 0E8B  EB 56 90					jmp		
+						next_shape_map_coordinates 
+    1249 0E8E				next_shape_Z: 
+    1250 0E8E  2E: 8B 16 0010 R				mov		
+						dx, cs:[colors+2] 
+    1251 0E93  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1252 0E96  BE 00A0 R				mov		
+						si, offset cs:shape_Z_X 
+    1253 0E99  BF 00A8 R				mov		
+						di, offset cs:shape_Z_Y 
+    1254 0E9C  EB 45 90					jmp		
+						next_shape_map_coordinates 
+    1255 0E9F				next_shape_L: 
+    1256 0E9F  2E: 8B 16 0010 R				mov		
+						dx, cs:[colors+2] 
+    1257 0EA4  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1258 0EA7  BE 0050 R				mov		
+						si, offset cs:shape_L_X 
+    1259 0EAA  BF 0060 R				mov		
+						di, offset cs:shape_L_Y 
+    1260 0EAD  EB 34 90					jmp		
+						next_shape_map_coordinates 
+    1261 0EB0				next_shape_T: 
+    1262 0EB0  2E: 8B 16 000E R				mov		
+						dx, cs:[colors] 
+    1263 0EB5  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1264 0EB8  BE 0030 R				mov		
+						si, offset cs:shape_T_X 
+    1265 0EBB  BF 0040 R				mov		
+						di, offset cs:shape_T_Y 
+    1266 0EBE  EB 23 90					jmp		
+						next_shape_map_coordinates 
+    1267 0EC1				next_shape_O: 
+    1268 0EC1  2E: 8B 16 000E R				mov		
+						dx, cs:[colors] 
+    1269 0EC6  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1270 0EC9  BE 0018 R				mov		
+						si, offset cs:shape_O_X 
+    1271 0ECC  BF 001C R				mov		
+						di, offset cs:shape_O_Y 
+    1272 0ECF  EB 12 90					jmp		
+						next_shape_map_coordinates 
+    1273 0ED2				next_shape_I: 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-43
+
+
+    1274 0ED2  2E: 8B 16 000E R				mov		
+						dx, cs:[colors] 
+    1275 0ED7  89 56 FE					mov		
+						ss:[bp-2], dx 
+    1276 0EDA  BE 0020 R				mov		
+						si, offset cs:shape_I_X 
+    1277 0EDD  BF 0028 R				mov		
+						di, offset cs:shape_I_Y 
+    1278 0EE0  EB 01 90					jmp		
+						next_shape_map_coordinates 
+    1279 0EE3				next_shape_map_coordinates: 
+    1280				 
+    1281 0EE3  4B					dec		
+						bx 
+    1282 0EE4  2E: C1 26 0016 R 02			shl		
+						cs:tile_size, 2 
+    1283 0EEA  2E: FF 06 0016 R				inc		
+						cs:tile_size 
+    1284 0EEF  53					push		bx 
+    1285 0EF0  68 0808					push		0808h 
+    1286 0EF3  E8 120C R				call		draw_sq
+					uare 
+    1287 0EF6  83 C4 04					add		
+						sp, 4 
+    1288 0EF9  2E: FF 0E 0016 R				dec		
+						cs:tile_size 
+    1289 0EFE  2E: C1 2E 0016 R 02			shr		
+						cs:tile_size, 2 
+    1290 0F04  43					inc		
+						bx 
+    1291				 
+    1292 0F05  B9 0004					mov		
+						cx, 4 
+    1293 0F08				drawing_next_shape_loop: 
+    1294 0F08  B8 0140					mov		
+						ax, 320 
+    1295 0F0B  2E: 0F B6 15				movzx		dx, byt
+					e ptr cs:[di] 
+    1296 0F0F  F7 E2					mul		
+						dx 
+    1297 0F11  2E: 0F B6 14				movzx		dx, byt
+					e ptr cs:[si] 
+    1298 0F15  03 C2					add		
+						ax, dx 
+    1299 0F17  2E: 8B 16 0016 R				mov		
+						dx, cs:tile_size 
+    1300 0F1C  F7 E2					mul		
+						dx 
+    1301 0F1E  03 C3					add		
+						ax, bx 
+    1302				 
+    1303 0F20  2E: FF 0E 0016 R				dec		
+						word ptr cs:tile_size 
+    1304 0F25  50					push		ax 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-44
+
+
+    1305 0F26  FF 76 FE					push		word pt
+					r ss:[bp-2] 
+    1306 0F29  E8 120C R				call		draw_sq
+					uare 
+    1307 0F2C  83 C4 04					add		
+						sp, 4 
+    1308 0F2F  2E: FF 06 0016 R				inc		
+						word ptr cs:tile_size 
+    1309 0F34  46					inc		
+						si 
+    1310 0F35  47					inc		
+						di 
+    1311 0F36  E2 D0					loop		drawing
+					_next_shape_loop 
+    1312				 
+    1313 0F38  5F					pop		
+						di 
+    1314 0F39  5E					pop		
+						si 
+    1315 0F3A  5A					pop		
+						dx 
+    1316 0F3B  59					pop		
+						cx 
+    1317 0F3C  5B					pop		
+						bx 
+    1318 0F3D  58					pop		
+						ax 
+    1319 0F3E  83 C4 02					add		
+						sp, 2 
+    1320 0F41  5D					pop		
+						bp 
+    1321 0F42  C3					ret 
+    1322 0F43				draw_next_shape endp 
+    1323 0F43				erase_shape proc 
+    1324 0F43  55					push		bp 
+    1325 0F44  8B EC					mov		
+						bp, sp 
+    1326					;ss:[bp+4] = 1/2 -> shape of pl
+					ayer1/2 
+    1327 0F46  53					push		bx 
+    1328 0F47  51					push		cx 
+    1329 0F48  56					push		si 
+    1330				 
+    1331 0F49  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1332 0F4D  0F 85 0F5A R				jne		
+						erase_shape_p2 
+    1333 0F51  BB 0278 R				mov		
+						bx, offset cs:p1_pixel_position
+					s 
+    1334 0F54  BE 0274 R				mov		
+						si, offset cs:p1_tiles_Y 
+    1335 0F57  EB 07 90					jmp		
+						begin_erasing_shape 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-45
+
+
+    1336 0F5A				erase_shape_p2: 
+    1337 0F5A  BB 0451 R				mov		
+						bx, offset cs:p2_pixel_position
+					s 
+    1338 0F5D  BE 044D R				mov		
+						si, offset cs:p2_tiles_Y 
+    1339 0F60				begin_erasing_shape: 
+    1340						 
+    1341 0F60  B9 0004					mov		
+						cx, 4 
+    1342 0F63  2E: FF 0E 0016 R				dec		
+						word ptr cs:tile_size 
+    1343 0F68				erasing_shape_loop: 
+    1344 0F68  2E: 80 3C 00				cmp		
+						byte ptr cs:[si], 0 
+    1345 0F6C  0F 84 0F7C R				je		
+						dont_erase_this_tile 
+    1346 0F70  2E: FF 37				push		word pt
+					r cs:[bx] 
+    1347 0F73  68 0000					push		word pt
+					r 0 
+    1348 0F76  E8 120C R				call		draw_sq
+					uare 
+    1349 0F79  83 C4 04					add		
+						sp, 4 
+    1350 0F7C				dont_erase_this_tile: 
+    1351 0F7C  46					inc		
+						si 
+    1352 0F7D  83 C3 02					add		
+						bx, 2 
+    1353 0F80  E2 E6					loop		erasing
+					_shape_loop 
+    1354 0F82  2E: FF 06 0016 R				inc		
+						word ptr cs:tile_size 
+    1355				 
+    1356 0F87  5E					pop		
+						si 
+    1357 0F88  59					pop		
+						cx 
+    1358 0F89  5B					pop		
+						bx 
+    1359 0F8A  5D					pop		
+						bp 
+    1360 0F8B  C3					ret 
+    1361 0F8C				erase_shape endp 
+    1362 0F8C				make_new_shape proc 
+    1363 0F8C  55					push		bp 
+    1364 0F8D  8B EC					mov		
+						bp, sp 
+    1365					;ss:[bp+4] = 1 or 2 -> shape fo
+					r player1 or player2 
+    1366 0F8F  66| 50					push		eax 
+    1367 0F91  53					push		bx 
+    1368 0F92  51					push		cx 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-46
+
+
+    1369				 
+    1370 0F93  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1371 0F97  0F 85 0FA1 R				jne		
+						shape_for_p2 
+    1372 0F9B  BB 026E R				mov		
+						bx, offset cs:p1_shape_X 
+    1373 0F9E  EB 04 90					jmp		
+						creating_shape 
+    1374 0FA1				shape_for_p2: 
+    1375 0FA1  BB 0447 R				mov		
+						bx, offset cs:p2_shape_X 
+    1376 0FA4				creating_shape: 
+    1377 0FA4  2E: C6 87 FE5B 00			mov		
+						byte ptr cs:[bx-421], 0	
+						; rotation = 0 
+    1378 0FAA  2E: C6 07 03				mov		
+						byte ptr cs:[bx], 3	
+						; x coordinate 
+    1379 0FAE  2E: C6 47 01 00				mov		
+						byte ptr cs:[bx+1], 0	; y coo
+					rdinate 
+    1380 0FB3  2E: 8A 67 19				mov		
+						ah, cs:[bx+25] 
+    1381 0FB7  2E: 88 A7 FE5A				mov		
+						cs:[bx-422], ah		
+							; p1/p2_shape = next_sh
+					ape 
+    1382 0FBC  80 FC 00					cmp		
+						ah, 0 
+    1383 0FBF  0F 84 10A6 R				je		
+						make_line_shape 
+    1384 0FC3  80 FC 01					cmp		
+						ah, 1 
+    1385 0FC6  0F 84 1086 R				je		
+						make_O_shape 
+    1386 0FCA  80 FC 02					cmp		
+						ah, 2 
+    1387 0FCD  0F 84 1066 R				je		
+						make_T_shape 
+    1388 0FD1  80 FC 03					cmp		
+						ah, 3 
+    1389 0FD4  0F 84 1046 R				je		
+						make_L_shape 
+    1390 0FD8  80 FC 04					cmp		
+						ah, 4 
+    1391 0FDB  0F 84 1026 R				je		
+						make_Z_shape 
+    1392 0FDF  80 FC 05					cmp		
+						ah, 5 
+    1393 0FE2  0F 84 1006 R				je		
+						make_J_shape 
+    1394						;cmp		
+						ah, 6 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-47
+
+
+    1395						;je		
+						make_S_shape 
+    1396				;make_S_shape: 
+    1397 0FE6  2E: A1 0012 R				mov		
+						ax, cs:[colors+4] 
+    1398 0FEA  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1399 0FEF  2E: 66| A1 0090 R			mov		
+						eax, cs:shape_S_X 
+    1400 0FF4  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1401 0FF9  2E: 66| A1 0098 R			mov		
+						eax, cs:shape_S_Y 
+    1402 0FFE  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1403 1003  E9 10C6 R				jmp		
+						correct_tile_coordinates 
+    1404 1006				make_J_shape: 
+    1405 1006  2E: A1 0012 R				mov		
+						ax, cs:[colors+4] 
+    1406 100A  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1407 100F  2E: 66| A1 0070 R			mov		
+						eax, cs:shape_J_X 
+    1408 1014  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1409 1019  2E: 66| A1 0080 R			mov		
+						eax, cs:shape_J_Y 
+    1410 101E  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1411 1023  E9 10C6 R				jmp		
+						correct_tile_coordinates 
+    1412 1026				make_Z_shape: 
+    1413 1026  2E: A1 0010 R				mov		
+						ax, cs:[colors+2] 
+    1414 102A  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1415 102F  2E: 66| A1 00A0 R			mov		
+						eax, cs:shape_Z_X 
+    1416 1034  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1417 1039  2E: 66| A1 00A8 R			mov		
+						eax, cs:shape_Z_Y 
+    1418 103E  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1419 1043  E9 10C6 R				jmp		
+						correct_tile_coordinates 
+    1420 1046				make_L_shape: 
+    1421 1046  2E: A1 0010 R				mov		
+						ax, cs:[colors+2] 
+    1422 104A  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1423 104F  2E: 66| A1 0050 R			mov		
+						eax, cs:shape_L_X 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-48
+
+
+    1424 1054  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1425 1059  2E: 66| A1 0060 R			mov		
+						eax, cs:shape_L_Y 
+    1426 105E  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1427 1063  EB 61 90					jmp		
+						correct_tile_coordinates 
+    1428 1066				make_T_shape: 
+    1429 1066  2E: A1 000E R				mov		
+						ax, cs:colors 
+    1430 106A  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1431 106F  2E: 66| A1 0030 R			mov		
+						eax, cs:shape_T_X 
+    1432 1074  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1433 1079  2E: 66| A1 0040 R			mov		
+						eax, cs:shape_T_Y 
+    1434 107E  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1435 1083  EB 41 90					jmp		
+						correct_tile_coordinates 
+    1436 1086				make_O_shape: 
+    1437 1086  2E: A1 000E R				mov		
+						ax, cs:colors 
+    1438 108A  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1439 108F  2E: 66| A1 0018 R			mov		
+						eax, cs:shape_O_X 
+    1440 1094  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1441 1099  2E: 66| A1 001C R			mov		
+						eax, cs:shape_O_Y 
+    1442 109E  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1443 10A3  EB 21 90					jmp		
+						correct_tile_coordinates 
+    1444 10A6				make_line_shape: 
+    1445 10A6  2E: A1 000E R				mov		
+						ax, cs:colors 
+    1446 10AA  2E: 89 87 FE57				mov		
+						cs:[bx-425], ax 
+    1447 10AF  2E: 66| A1 0020 R			mov		
+						eax, cs:shape_I_X 
+    1448 10B4  2E: 66| 89 47 02				mov		
+						cs:[bx+2], eax 
+    1449 10B9  2E: 66| A1 0028 R			mov		
+						eax, cs:shape_I_Y 
+    1450 10BE  2E: 66| 89 47 06				mov		
+						cs:[bx+6], eax 
+    1451 10C3  EB 01 90					jmp		
+						correct_tile_coordinates 
+    1452				 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-49
+
+
+    1453 10C6				correct_tile_coordinates: 
+    1454 10C6  B9 0004					mov		
+						cx, 4 
+    1455 10C9				correct_tile_coordinates_loop: 
+    1456 10C9  2E: 80 47 02 03				add		
+						byte ptr cs:[bx+2], 3 
+    1457 10CE  43					inc		
+						bx 
+    1458 10CF  E2 F8					loop		correct
+					_tile_coordinates_loop 
+    1459						 
+    1460 10D1  FF 76 04					push		word pt
+					r ss:[bp+4] 
+    1461 10D4  E8 04A7 R				call		update_
+					random_number 
+    1462 10D7  83 C4 02					add		
+						sp, 2 
+    1463				 
+    1464 10DA  83 EB 04					sub		
+						bx, 4 
+    1465 10DD  2E: 0F B6 47 15				movzx		ax, byt
+					e ptr cs:[bx+21] 
+    1466 10E2  B1 07					mov		
+						cl, 7 
+    1467 10E4  F6 F1					div		
+						cl 
+    1468 10E6  2E: 88 67 19				mov		
+						cs:[bx+25], ah 
+    1469				 
+    1470 10EA  FF 76 04					push		word pt
+					r ss:[bp+4] 
+    1471 10ED  E8 0E1F R				call		draw_ne
+					xt_shape 
+    1472 10F0  83 C4 02					add		
+						sp, 2 
+    1473				 
+    1474 10F3  59					pop		
+						cx 
+    1475 10F4  5B					pop		
+						bx 
+    1476 10F5  66| 58					pop		
+						eax 
+    1477 10F7  5D					pop		
+						bp 
+    1478 10F8  C3					ret 
+    1479 10F9				make_new_shape endp 
+    1480				 
+    1481 10F9				draw_board proc 
+    1482 10F9  55					push		bp 
+    1483 10FA  8B EC					mov		
+						bp, sp 
+    1484 10FC  50					push		ax 
+    1485 10FD  53					push		bx 
+    1486 10FE  51					push		cx 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-50
+
+
+    1487 10FF  52					push		dx 
+    1488 1100  57					push		di 
+    1489				 
+    1490 1101  80 7E 04 01				cmp		
+						byte ptr ss:[bp+4], 1 
+    1491 1105  0F 85 110F R				jne		
+						draw_p2_board 
+    1492 1109  BB 00CA R				mov		
+						bx, offset cs:p1_board 
+    1493 110C  EB 04 90					jmp		
+						start_drawing_board 
+    1494 110F				draw_p2_board: 
+    1495 110F  BB 02A3 R				mov		
+						bx, offset cs:p2_board 
+    1496 1112				start_drawing_board: 
+    1497 1112  BA 0000					mov		
+						dx, 0 
+    1498 1115  2E: 8B 7F E8				mov		
+						di, cs:[bx-24]		; p1/p2
+					_top_left 
+    1499 1119  B8 0140					mov		
+						ax, 320 
+    1500 111C  2E: 8B 0E 0016 R				mov		
+						cx, cs:tile_size 
+    1501 1121  F7 E1					mul		
+						cx 
+    1502 1123  03 F8					add		
+						di, ax 
+    1503 1125  B8 0136					mov		
+						ax, 310 
+    1504 1128  2E: 8B 0E 0016 R				mov		
+						cx, cs:tile_size 
+    1505 112D  F7 E1					mul		
+						cx			
+							; ax = tile_size*screen
+					_width - 10*tile_size = new line 
+    1506						 
+    1507 112F  83 C3 14					add		
+						bx, 20 
+    1508 1132  2E: 8B 16 0016 R				mov		
+						dx, cs:tile_size 
+    1509 1137  2E: FF 0E 0016 R				dec		
+						word ptr cs:tile_size 
+    1510 113C  B5 14					mov		
+						ch, 20 
+    1511 113E				drawing_board_Y: 
+    1512 113E  B1 0A					mov		
+						cl, 10 
+    1513 1140				drawing_board_X: 
+    1514 1140  57					push		di 
+    1515 1141  2E: FF 37				push		word pt
+					r cs:[bx] 
+    1516 1144  E8 120C R				call		draw_sq
+					uare 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-51
+
+
+    1517 1147  83 C4 04					add		
+						sp, 4 
+    1518 114A  83 C3 02					add		
+						bx, 2 
+    1519 114D  03 FA					add		
+						di, dx 
+    1520 114F  80 E9 01					sub		
+						cl, 1 
+    1521 1152  75 EC					jnz		
+						drawing_board_X 
+    1522 1154  03 F8					add		
+						di, ax 
+    1523 1156  80 ED 01					sub		
+						ch, 1 
+    1524 1159  75 E3					jnz		
+						drawing_board_Y 
+    1525 115B  2E: FF 06 0016 R				inc		
+						word ptr cs:tile_size 
+    1526				 
+    1527 1160  5F					pop		
+						di 
+    1528 1161  5A					pop		
+						dx 
+    1529 1162  59					pop		
+						cx 
+    1530 1163  5B					pop		
+						bx 
+    1531 1164  58					pop		
+						ax 
+    1532 1165  5D					pop		
+						bp 
+    1533 1166  C3					ret 
+    1534 1167				draw_board endp 
+    1535 1167				draw_border proc 
+    1536 1167  55					push		bp 
+    1537 1168  8B EC					mov		
+						bp, sp 
+    1538					;ss:[bp+4] = top left pixel of 
+					position x=0, y=0 
+    1539 116A  50					push		ax 
+    1540 116B  53					push		bx 
+    1541 116C  51					push		cx 
+    1542 116D  52					push		dx 
+    1543					; board = border of multiple gr
+					ay squares 
+    1544 116E  8B 5E 04					mov		
+						bx, ss:[bp+4]		; bx = 
+					position current square 
+    1545 1171  2E: 2B 1E 0016 R				sub		
+						bx, cs:tile_size 
+    1546 1176  81 EB 0141				sub		
+						bx, 321			
+							; 1 pixel left and 1 pi
+					xel up. creates 1 pixel gap between boa
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-52
+
+
+					rd left/top wall and position x=0/y=0 
+    1547				 
+    1548 117A  B9 000C					mov		
+						cx, 12 
+    1549 117D  2E: 8B 16 0016 R				mov		
+						dx, cs:tile_size 
+    1550 1182				drawing_top_border: 
+    1551 1182  53					push		bx 
+    1552 1183  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1553 1188  E8 120C R				call		draw_sq
+					uare 
+    1554 118B  83 C4 04					add		
+						sp, 4 
+    1555 118E  03 DA					add		
+						bx, dx 
+    1556 1190  E2 F0					loop		drawing
+					_top_border 
+    1557 1192  43					inc		
+						bx 
+    1558 1193  2B DA					sub		
+						bx, dx 
+    1559 1195  53					push		bx 
+    1560 1196  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1561 119B  E8 120C R				call		draw_sq
+					uare 
+    1562 119E  83 C4 04					add		
+						sp, 4 
+    1563				 
+    1564 11A1  B9 0015					mov		
+						cx, 21 
+    1565 11A4  B8 0140					mov		
+						ax, 320 
+    1566 11A7  F7 E2					mul		
+						dx			
+						; ax = pixel vertical gap betwe
+					en adjacent squares 
+    1567 11A9				drawing_right_border: 
+    1568 11A9  03 D8					add		
+						bx, ax 
+    1569 11AB  53					push		bx 
+    1570 11AC  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1571 11B1  E8 120C R				call		draw_sq
+					uare 
+    1572 11B4  83 C4 04					add		
+						sp, 4 
+    1573 11B7  E2 F0					loop		drawing
+					_right_border 
+    1574 11B9  81 C3 0140				add		
+						bx, 320			; 1 pix
+					el down creates 1 pixel gap between lyi
+					ng shape and bottom border 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-53
+
+
+    1575 11BD  53					push		bx 
+    1576 11BE  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1577 11C3  E8 120C R				call		draw_sq
+					uare 
+    1578 11C6  83 C4 04					add		
+						sp, 4 
+    1579				 
+    1580 11C9  2E: 8B 16 0016 R				mov		
+						dx, tile_size 
+    1581 11CE  B9 000B					mov		
+						cx, 11 
+    1582 11D1				drawing_bottom_border: 
+    1583 11D1  2B DA					sub		
+						bx, dx 
+    1584 11D3  53					push		bx 
+    1585 11D4  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1586 11D9  E8 120C R				call		draw_sq
+					uare 
+    1587 11DC  83 C4 04					add		
+						sp, 4 
+    1588 11DF  E2 F0					loop		drawing
+					_bottom_border 
+    1589 11E1  4B					dec		
+						bx 
+    1590 11E2  53					push		bx 
+    1591 11E3  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1592 11E8  E8 120C R				call		draw_sq
+					uare 
+    1593 11EB  83 C4 04					add		
+						sp, 4 
+    1594				 
+    1595				 
+    1596 11EE  B8 0140					mov		
+						ax, 320 
+    1597 11F1  F7 E2					mul		
+						dx 
+    1598 11F3  B9 0015					mov		
+						cx, 21 
+    1599 11F6				drawing_left_border: 
+    1600 11F6  2B D8					sub		
+						bx, ax 
+    1601 11F8  53					push		bx 
+    1602 11F9  2E: FF 36 0014 R				push		word pt
+					r cs:[colors+6] 
+    1603 11FE  E8 120C R				call		draw_sq
+					uare 
+    1604 1201  83 C4 04					add		
+						sp, 4 
+    1605 1204  E2 F0					loop		drawing
+					_left_border 
+    1606				 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-54
+
+
+    1607 1206  58					pop		
+						ax 
+    1608 1207  5B					pop		
+						bx 
+    1609 1208  59					pop		
+						cx 
+    1610 1209  5A					pop		
+						dx 
+    1611 120A  5D					pop		
+						bp 
+    1612 120B  C3					ret 
+    1613 120C				draw_border endp 
+    1614 120C				draw_square proc 
+    1615 120C  55					push		bp 
+    1616 120D  8B EC					mov		
+						bp, sp 
+    1617 120F  50					push		ax 
+    1618 1210  53					push		bx 
+    1619 1211  51					push		cx 
+    1620 1212  52					push		dx 
+    1621 1213  06					push		es 
+    1622					;word ptr ss:[bp+6] = position 
+					of square top left pixel 
+    1623					;byte ptr ss:[bp+5] = color of 
+					square border 
+    1624					;byte ptr ss:[bp+4] = color of 
+					square 
+    1625 1214  B8 A000					mov		
+						ax, 0a000h 
+    1626 1217  8E C0					mov		
+						es, ax 
+    1627 1219  2E: 8B 0E 0016 R				mov		
+						cx, cs:tile_size	
+						; using it because I'm lazy to 
+					use function parameter here... writing 
+					tetris in assembly... 
+    1628 121E  8B 5E 06					mov		
+						bx, ss:[bp+6]		
+						; position of current pixel 
+    1629 1221  8A 56 05					mov		
+						dl, ss:[bp+5] 
+    1630 1224				top_border: 
+    1631 1224  26: 88 17				mov		
+						es:[bx], dl 
+    1632 1227  43					inc		
+						bx 
+    1633 1228  E2 FA					loop		top_bor
+					der 
+    1634 122A  B8 0140					mov		
+						ax, 320			
+							; screen is 320 pixels 
+					wide 
+    1635 122D  2E: 8B 16 0016 R				mov		
+						dx, cs:tile_size	
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-55
+
+
+						; height of square 
+    1636 1232  83 EA 02					sub		
+						dx, 2			
+							; because border is 2 p
+					ixels high 
+    1637 1235  F7 E2					mul		
+						dx			
+								; (height-2) * 
+					320 = position (offset) of bottom left 
+					corner 
+    1638 1237				draw_y: 
+    1639 1237  8B 5E 06					mov		
+						bx, ss:[bp+6] 
+    1640 123A  03 D8					add		
+						bx, ax 
+    1641 123C  8A 56 05					mov		
+						dl, ss:[bp+5] 
+    1642 123F  26: 88 17				mov		
+						es:[bx], dl		
+						; draw left border 
+    1643 1242  43					inc		
+						bx			
+							; next pixel 
+    1644 1243  2E: 8B 0E 0016 R				mov		
+						cx, cs:tile_size 
+    1645 1248  83 E9 02					sub		
+						cx, 2			
+						; middle is smaller by 2 becaus
+					e left and right border are 2 pixels 
+    1646 124B				draw_x: 
+    1647 124B  8A 56 04					mov		
+						dl, ss:[bp+4] 
+    1648 124E  26: 88 17				mov		
+						es:[bx], dl 
+    1649 1251  43					inc		
+						bx 
+    1650 1252  E2 F7					loop		draw_x 
+    1651 1254  8A 56 05					mov		
+						dl, ss:[bp+5] 
+    1652 1257  26: 88 17				mov		
+						es:[bx], dl		
+						;draw right border 
+    1653 125A  2D 0140					sub		
+						ax, 320 
+    1654 125D  75 D8					jnz		
+						draw_y 
+    1655				 
+    1656 125F  2E: 8B 0E 0016 R				mov		
+						cx, cs:tile_size 
+    1657 1264  8B 5E 06					mov		
+						bx, ss:[bp+6] 
+    1658 1267  B8 0140					mov		
+						ax, 320 
+    1659 126A  2E: 8B 16 0016 R				mov		
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-56
+
+
+						dx, cs:tile_size 
+    1660 126F  4A					dec		
+						dx 
+    1661 1270  F7 E2					mul		
+						dx 
+    1662 1272  03 D8					add		
+						bx, ax 
+    1663 1274  8A 56 05					mov		
+						dl, ss:[bp+5]		; ax = 
+					height*320 = bottom left corner 
+    1664 1277				bottom_border: 
+    1665 1277  26: 88 17				mov		
+						es:[bx],dl 
+    1666 127A  43					inc		
+						bx 
+    1667 127B  E2 FA					loop		bottom_
+					border 
+    1668				 
+    1669 127D  07					pop		
+						es 
+    1670 127E  5A					pop		
+						dx 
+    1671 127F  59					pop		
+						cx 
+    1672 1280  5B					pop		
+						bx 
+    1673 1281  58					pop		
+						ax 
+    1674 1282  5D					pop		
+						bp 
+    1675 1283  C3					ret 
+    1676 1284				draw_square endp 
+    1677				 
+    1678 1284				game_init proc 
+    1679 1284  55					push		bp 
+    1680 1285  8B EC					mov		
+						bp, sp 
+    1681				 
+    1682 1287  E8 0462 R				call		start_r
+					andom_numbers 
+    1683						 
+    1684 128A  2E: C7 06 00B2 R 0F32			mov		
+						word ptr cs:p1_top_left, 3890
+								; position of t
+					op left pixel of player1 board 
+    1685 1291  2E: C7 06 028B R 0FBE			mov		
+						word ptr cs:p2_top_left, 4030 
+    1686 1298  2E: C7 06 00B0 R 0DC6			mov		
+						word ptr cs:p1_top_left_next, 3
+					526		; position of top left 
+					pixel of p1 small box with next piece i
+					n it 
+    1687 129F  2E: C7 06 0289 R 0EDC			mov		
+						word ptr cs:p2_top_left_next, 3
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-57
+
+
+					804 
+    1688				 
+    1689 12A6  2E: FF 36 00B2 R				push		word pt
+					r cs:p1_top_left 
+    1690 12AB  E8 1167 R				call		draw_bo
+					rder 
+    1691 12AE  83 C4 02					add		
+						sp, 2 
+    1692 12B1  2E: FF 36 028B R				push		word pt
+					r cs:p2_top_left 
+    1693 12B6  E8 1167 R				call		draw_bo
+					rder 
+    1694 12B9  83 C4 02					add		
+						sp, 2 
+    1695						 
+    1696 12BC  2E: 0F B6 06 0283 R			movzx		ax, byt
+					e ptr cs:p1_rand_number 
+    1697 12C2  B1 07					mov		
+						cl, 7 
+    1698 12C4  F6 F1					div		
+						cl 
+    1699 12C6  2E: 88 26 0287 R				mov		
+						cs:p1_next_shape, ah 
+    1700 12CB  68 0001					push		word pt
+					r 1 
+    1701 12CE  E8 04A7 R				call		update_
+					random_number 
+    1702 12D1  83 C4 02					add		
+						sp, 2 
+    1703 12D4  2E: 0F B6 06 045C R			movzx		ax, byt
+					e ptr cs:p2_rand_number 
+    1704 12DA  B1 07					mov		
+						cl, 7 
+    1705 12DC  F6 F1					div		
+						cl 
+    1706 12DE  2E: 88 26 0460 R				mov		
+						cs:p2_next_shape, ah 
+    1707 12E3  68 0002					push		word pt
+					r 2 
+    1708 12E6  E8 04A7 R				call		update_
+					random_number 
+    1709 12E9  83 C4 02					add		
+						sp, 2 
+    1710				 
+    1711 12EC  68 0001					push		word pt
+					r 1 
+    1712 12EF  E8 0F8C R				call		make_ne
+					w_shape 
+    1713 12F2  83 C4 02					add		
+						sp, 2 
+    1714 12F5  68 0002					push		word pt
+					r 2 
+    1715 12F8  E8 0F8C R				call		make_ne
+					w_shape 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-58
+
+
+    1716 12FB  83 C4 02					add		
+						sp, 2 
+    1717				 
+    1718 12FE  68 0001					push		word pt
+					r 1 
+    1719 1301  E8 0DC5 R				call		draw_sh
+					ape 
+    1720 1304  83 C4 02					add		
+						sp, 2 
+    1721 1307  68 0002					push		word pt
+					r 2 
+    1722 130A  E8 0DC5 R				call		draw_sh
+					ape 
+    1723 130D  83 C4 02					add		
+						sp, 2 
+    1724						 
+    1725 1310  2E: C6 06 0280 R 03			mov		
+						byte ptr cs:p1_speed, 3 
+    1726 1316  2E: C6 06 0459 R 03			mov		
+						byte ptr cs:p2_speed, 3 
+    1727 131C  2E: C6 06 0281 R 14			mov		
+						byte ptr cs:p1_speed_step, 20 
+    1728 1322  2E: C6 06 045A R 14			mov		
+						byte ptr cs:p2_speed_step, 20 
+    1729				 
+    1730 1328  5D					pop		
+						bp 
+    1731 1329  C3					ret 
+    1732 132A				game_init endp 
+    1733				 
+    1734 132A				START: 
+    1735 132A  B4 00					mov		
+						ah, 0 
+    1736 132C  B0 13					mov		
+						al, 13h 
+    1737 132E  CD 10					int		
+						10h 
+    1738 1330  E8 1284 R				call		game_in
+					it 
+    1739 1333  B0 00					mov		
+						al, 0 
+    1740 1335  B4 05					mov		
+						ah, 5 
+    1741 1337  CD 0A					int		
+						10 
+    1742				 
+    1743 1339  BB 0000					mov		
+						bx, 0 
+    1744 133C  8E C3					mov		
+						es, bx 
+    1745 133E  26: 66| A1 0020				mov		
+						eax, es:[32] 
+    1746 1343  2E: 66| A3 0001 R			mov		
+						cs:vector8, eax 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-59
+
+
+    1747 1348  B8 ---- R				mov		
+						ax, SEG clock_function 
+    1748 134B  BB 0643 R				mov		
+						bx, OFFSET clock_function 
+    1749 134E  FA					cli 
+    1750 134F  26: 89 1E 0020				mov		
+						es:[32], bx		
+							; clock interrupt will 
+					call clock_function 
+    1751 1354  26: A3 0022				mov		
+						es:[34], ax 
+    1752 1358  FB					sti 
+    1753				 
+    1754 1359  26: 66| A1 0024				mov		
+						eax, es:[36] 
+    1755 135E  2E: 66| A3 0005 R			mov		
+						cs:vector9, eax 
+    1756 1363  B8 ---- R				mov		
+						ax, SEG keyboard_function 
+    1757 1366  BB 04D7 R				mov		
+						bx, OFFSET keyboard_function 
+    1758 1369  FA					cli 
+    1759 136A  26: 89 1E 0024				mov		
+						es:[36], bx		
+							; keyboard interrupt wi
+					ll call keyboard_function 
+    1760 136F  26: A3 0026				mov		
+						es:[38], ax 
+    1761 1373  FB					sti 
+    1762 1374				waiting: 
+    1763 1374  2E: 80 3E 0009 R 00			cmp		
+						byte ptr cs:game_over, 0 
+    1764 137A  74 F8					je		
+						waiting 
+    1765				 
+    1766 137C  B4 00					mov		
+						ah, 0 
+    1767 137E  B0 03					mov		
+						al, 3 
+    1768 1380  CD 10					int		
+						10h 
+    1769				 
+    1770 1382  2E: 66| A1 0001 R			mov		
+						eax, cs:vector8 
+    1771 1387  FA					cli 
+    1772 1388  26: 66| A3 0020				mov		
+						es:[32], eax 
+    1773 138D  FB					sti 
+    1774				 
+    1775 138E  2E: 66| A1 0005 R			mov		
+						eax, cs:vector9 
+    1776 1393  FA					cli 
+    1777 1394  26: 66| A3 0024				mov		
+						es:[36], eax 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Page     1-60
+
+
+    1778 1399  FB					sti 
+    1779				 
+    1780 139A  B8 4C00					mov		
+						ax, 4c00h 
+    1781 139D  CD 21					int		
+						21h 
+    1782 139F				instructions		ENDS 
+    1783				 
+    1784 0000				memory				SEGMENT
+					 stack 
+    1785 0000  0100[					db		
+						256 dup (?) 
+    1786	    ??			
+    1787			 ]	
+    1788				
+    1789 0100				memory				ENDS 
+    1790				 
+    1791				END START 
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-1
+
+
+
+
+                N a m e         	Size	Length	 Align	Combine Class
+
+INSTRUCTIONS . . . . . . . . . .  	16 Bit	139F	PARA	NONE	
+MEMORY . . . . . . . . . . . . .  	32 Bit	0100	PARA	STACK	
+
+Symbols:            
+
+                N a m e         	Type	 Value	 Attr
+
+ADDING_SHAPE_OFFSET_LOOP . . . .  	L NEAR	0A53	INSTRUCTIONS
+ADD_SHAPE_OFFSET . . . . . . . .  	L NEAR	0A49	INSTRUCTIONS
+
+BEGIN_CLEARING_BOARD . . . . . .  	L NEAR	0CD7	INSTRUCTIONS
+BEGIN_DRAWING_SHAPE  . . . . . .  	L NEAR	0DF4	INSTRUCTIONS
+BEGIN_ERASING_SHAPE  . . . . . .  	L NEAR	0F60	INSTRUCTIONS
+BEGIN_MAPPING  . . . . . . . . .  	L NEAR	0D98	INSTRUCTIONS
+BOTTOM_BORDER  . . . . . . . . .  	L NEAR	1277	INSTRUCTIONS
+
+CANT_ROTATE  . . . . . . . . . .  	L NEAR	0AC3	INSTRUCTIONS
+CHECKED_IF_SHOULD_CLEAR  . . . .  	L NEAR	0D2B	INSTRUCTIONS
+CHECKED_P2_DELAY . . . . . . . .  	L NEAR	06C9	INSTRUCTIONS
+CHECKED_PRESSING_DOWN  . . . . .  	L NEAR	07E5	INSTRUCTIONS
+CHECKING_IF_CAN_ROTATE . . . . .  	L NEAR	0A79	INSTRUCTIONS
+CHECK_IF_HIT_BOTTOM  . . . . . .  	L NEAR	0C1D	INSTRUCTIONS
+CHECK_IF_HIT_LEFT_TILE . . . . .  	L NEAR	0B8D	INSTRUCTIONS
+CHECK_IF_HIT_LEFT_WALL . . . . .  	L NEAR	0B7C	INSTRUCTIONS
+CHECK_IF_HIT_RIGHT_TILE  . . . .  	L NEAR	0B02	INSTRUCTIONS
+CHECK_IF_HIT_RIGHT_WALL  . . . .  	L NEAR	0AF1	INSTRUCTIONS
+CHECK_IF_HIT_TILE  . . . . . . .  	L NEAR	0C2E	INSTRUCTIONS
+CHECK_IF_J_ROTATION_OVERFLOW . .  	L NEAR	0944	INSTRUCTIONS
+CHECK_IF_L_ROTATION_OVERFLOW . .  	L NEAR	0980	INSTRUCTIONS
+CHECK_IF_SHOULD_CLEAR_LINE . . .  	L NEAR	0D1E	INSTRUCTIONS
+CHECK_IF_T_ROTATION_OVERFLOW . .  	L NEAR	09BC	INSTRUCTIONS
+CHECK_P1_DELAY . . . . . . . . .  	L NEAR	06AB	INSTRUCTIONS
+CHECK_P1_RL  . . . . . . . . . .  	L NEAR	0660	INSTRUCTIONS
+CHECK_P2_DELAY . . . . . . . . .  	L NEAR	06BA	INSTRUCTIONS
+CHECK_P2_DOWN  . . . . . . . . .  	L NEAR	07D5	INSTRUCTIONS
+CHECK_P2_RL  . . . . . . . . . .  	L NEAR	0692	INSTRUCTIONS
+CHECK_P2_RR  . . . . . . . . . .  	L NEAR	0679	INSTRUCTIONS
+CLEAR_BOARDS . . . . . . . . . .  	N PROC	0CC0	INSTRUCTIONS	Length = 003E
+CLEAR_BOARDS_LOOP  . . . . . . .  	L NEAR	0CDA	INSTRUCTIONS
+CLEAR_BOARDS_SET_BX  . . . . . .  	L NEAR	0CC8	INSTRUCTIONS
+CLEAR_LINES  . . . . . . . . . .  	N PROC	0CFE	INSTRUCTIONS	Length = 0070
+CLEAR_P2_BOARD . . . . . . . . .  	L NEAR	0CD4	INSTRUCTIONS
+CLEAR_P2_LINES . . . . . . . . .  	L NEAR	0D15	INSTRUCTIONS
+CLEAR_THE_LINE . . . . . . . . .  	L NEAR	0D39	INSTRUCTIONS
+CLEAR_THE_LINE_LOOP  . . . . . .  	L NEAR	0D3E	INSTRUCTIONS
+CLOCK_FUNCTION . . . . . . . . .  	N PROC	0643	INSTRUCTIONS	Length = 0208
+COLORS . . . . . . . . . . . . .  	L WORD	000E	INSTRUCTIONS
+COORDINATES_OF_P2  . . . . . . .  	L NEAR	0D8D	INSTRUCTIONS
+CORRECT_TILE_COORDINATES . . . .  	L NEAR	10C6	INSTRUCTIONS
+CORRECT_TILE_COORDINATES_LOOP  .  	L NEAR	10C9	INSTRUCTIONS
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-2
+
+
+CREATING_SHAPE . . . . . . . . .  	L NEAR	0FA4	INSTRUCTIONS
+
+DONT_DRAW_THIS_TILE  . . . . . .  	L NEAR	0E0E	INSTRUCTIONS
+DONT_ERASE_THIS_TILE . . . . . .  	L NEAR	0F7C	INSTRUCTIONS
+DRAWING_BOARD_X  . . . . . . . .  	L NEAR	1140	INSTRUCTIONS
+DRAWING_BOARD_Y  . . . . . . . .  	L NEAR	113E	INSTRUCTIONS
+DRAWING_BOTTOM_BORDER  . . . . .  	L NEAR	11D1	INSTRUCTIONS
+DRAWING_LEFT_BORDER  . . . . . .  	L NEAR	11F6	INSTRUCTIONS
+DRAWING_NEXT_SHAPE_LOOP  . . . .  	L NEAR	0F08	INSTRUCTIONS
+DRAWING_RIGHT_BORDER . . . . . .  	L NEAR	11A9	INSTRUCTIONS
+DRAWING_SHAPE_LOOP . . . . . . .  	L NEAR	0DFC	INSTRUCTIONS
+DRAWING_TOP_BORDER . . . . . . .  	L NEAR	1182	INSTRUCTIONS
+DRAW_BOARD . . . . . . . . . . .  	N PROC	10F9	INSTRUCTIONS	Length = 006E
+DRAW_BORDER  . . . . . . . . . .  	N PROC	1167	INSTRUCTIONS	Length = 00A5
+DRAW_MINI_GRID . . . . . . . . .  	N PROC	084B	INSTRUCTIONS	Length = 0054
+DRAW_NEXT_SHAPE  . . . . . . . .  	N PROC	0E1F	INSTRUCTIONS	Length = 0124
+DRAW_P2_BOARD  . . . . . . . . .  	L NEAR	110F	INSTRUCTIONS
+DRAW_SHAPE . . . . . . . . . . .  	N PROC	0DC5	INSTRUCTIONS	Length = 005A
+DRAW_SHAPE_P2  . . . . . . . . .  	L NEAR	0DEA	INSTRUCTIONS
+DRAW_SQUARE  . . . . . . . . . .  	N PROC	120C	INSTRUCTIONS	Length = 0078
+DRAW_X . . . . . . . . . . . . .  	L NEAR	124B	INSTRUCTIONS
+DRAW_Y . . . . . . . . . . . . .  	L NEAR	1237	INSTRUCTIONS
+
+ENGRAVING_THE_BOAD_ARRAY . . . .  	L NEAR	0C76	INSTRUCTIONS
+ERASE_SHAPE  . . . . . . . . . .  	N PROC	0F43	INSTRUCTIONS	Length = 0049
+ERASE_SHAPE_P2 . . . . . . . . .  	L NEAR	0F5A	INSTRUCTIONS
+ERASING_SHAPE_LOOP . . . . . . .  	L NEAR	0F68	INSTRUCTIONS
+ESCAPE_PRESSED . . . . . . . . .  	L NEAR	0636	INSTRUCTIONS
+
+GAME_INIT  . . . . . . . . . . .  	N PROC	1284	INSTRUCTIONS	Length = 00A6
+GAME_OVER  . . . . . . . . . . .  	L BYTE	0009	INSTRUCTIONS
+GRAVITATION  . . . . . . . . . .  	N PROC	0BE6	INSTRUCTIONS	Length = 00DA
+GRAVITATION_FOR_P2 . . . . . . .  	L NEAR	0C0E	INSTRUCTIONS
+GRAVITATION_HAS_SUCCEEDED  . . .  	L NEAR	0CB0	INSTRUCTIONS
+
+J_ROTATION_IS_SET  . . . . . . .  	L NEAR	094C	INSTRUCTIONS
+
+KEYBOARD_FUNCTION  . . . . . . .  	N PROC	04D7	INSTRUCTIONS	Length = 016C
+KEYBOARD_FUNCTION_END  . . . . .  	L NEAR	063C	INSTRUCTIONS
+
+LOOK_FOR_LINES_LOOP_END  . . . .  	L NEAR	0D4F	INSTRUCTIONS
+LOOK_FOR_LINES_TO_CLEAR  . . . .  	L NEAR	0D1B	INSTRUCTIONS
+L_ROTATION_IS_SET  . . . . . . .  	L NEAR	0988	INSTRUCTIONS
+
+MAKE_J_SHAPE . . . . . . . . . .  	L NEAR	1006	INSTRUCTIONS
+MAKE_LINE_SHAPE  . . . . . . . .  	L NEAR	10A6	INSTRUCTIONS
+MAKE_L_SHAPE . . . . . . . . . .  	L NEAR	1046	INSTRUCTIONS
+MAKE_NEW_SHAPE . . . . . . . . .  	N PROC	0F8C	INSTRUCTIONS	Length = 016D
+MAKE_O_SHAPE . . . . . . . . . .  	L NEAR	1086	INSTRUCTIONS
+MAKE_T_SHAPE . . . . . . . . . .  	L NEAR	1066	INSTRUCTIONS
+MAKE_Z_SHAPE . . . . . . . . . .  	L NEAR	1026	INSTRUCTIONS
+MAPPING_COORDINATES_LOOP . . . .  	L NEAR	0D9B	INSTRUCTIONS
+MAP_COORDINATES_TO_PIXEL_POSITI   	N PROC	0D6E	INSTRUCTIONS	Length = 0057
+MOVE_LEFT  . . . . . . . . . . .  	N PROC	0B5A	INSTRUCTIONS	Length = 008C
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-3
+
+
+MOVE_PIECE_DOWN  . . . . . . . .  	L NEAR	0C53	INSTRUCTIONS
+MOVE_PIECE_LEFT  . . . . . . . .  	L NEAR	0BBB	INSTRUCTIONS
+MOVE_PIECE_RIGHT . . . . . . . .  	L NEAR	0B30	INSTRUCTIONS
+MOVE_RIGHT . . . . . . . . . . .  	N PROC	0ACF	INSTRUCTIONS	Length = 008B
+MOVING_LEFT_FOR_P2 . . . . . . .  	L NEAR	0B73	INSTRUCTIONS
+MOVING_RIGHT_FOR_P2  . . . . . .  	L NEAR	0AE8	INSTRUCTIONS
+
+NEXT_SHAPE_I . . . . . . . . . .  	L NEAR	0ED2	INSTRUCTIONS
+NEXT_SHAPE_J . . . . . . . . . .  	L NEAR	0E7D	INSTRUCTIONS
+NEXT_SHAPE_L . . . . . . . . . .  	L NEAR	0E9F	INSTRUCTIONS
+NEXT_SHAPE_MAP_COORDINATES . . .  	L NEAR	0EE3	INSTRUCTIONS
+NEXT_SHAPE_O . . . . . . . . . .  	L NEAR	0EC1	INSTRUCTIONS
+NEXT_SHAPE_OF_P2 . . . . . . . .  	L NEAR	0E3F	INSTRUCTIONS
+NEXT_SHAPE_T . . . . . . . . . .  	L NEAR	0EB0	INSTRUCTIONS
+NEXT_SHAPE_Z . . . . . . . . . .  	L NEAR	0E8E	INSTRUCTIONS
+NO_LINES_CLEARED . . . . . . . .  	L NEAR	0D68	INSTRUCTIONS
+NUMBER_PRESSED . . . . . . . . .  	L NEAR	055B	INSTRUCTIONS
+
+OTHER_PIECES_ARE_BLOCKING_LEFT .  	L NEAR	0BD9	INSTRUCTIONS
+OTHER_PIECES_ARE_BLOCKING_RIGHT   	L NEAR	0B4E	INSTRUCTIONS
+
+P1_BOARD . . . . . . . . . . . .  	L WORD	00CA	INSTRUCTIONS	Length = 00D2
+P1_CAN_MOVE_D  . . . . . . . . .  	L BYTE	0288	INSTRUCTIONS
+P1_COLOR . . . . . . . . . . . .  	L WORD	00C5	INSTRUCTIONS
+P1_DELAY . . . . . . . . . . . .  	L BYTE	00C7	INSTRUCTIONS
+P1_DOWN_PRESSED  . . . . . . . .  	L NEAR	05FC	INSTRUCTIONS
+P1_DOWN_RELEASED . . . . . . . .  	L NEAR	060F	INSTRUCTIONS
+P1_GRID_X  . . . . . . . . . . .  	L NEAR	0862	INSTRUCTIONS
+P1_GRID_Y  . . . . . . . . . . .  	L NEAR	085F	INSTRUCTIONS
+P1_IS_NOT_PRESSING_L . . . . . .  	L NEAR	0747	INSTRUCTIONS
+P1_IS_NOT_PRESSING_R . . . . . .  	L NEAR	0708	INSTRUCTIONS
+P1_KEEP_PRESSING_L . . . . . . .  	L NEAR	0734	INSTRUCTIONS
+P1_KEEP_PRESSING_R . . . . . . .  	L NEAR	06F5	INSTRUCTIONS
+P1_KEY_D . . . . . . . . . . . .  	L WORD	00B8	INSTRUCTIONS
+P1_KEY_L . . . . . . . . . . . .  	L WORD	00B6	INSTRUCTIONS
+P1_KEY_LR  . . . . . . . . . . .  	L WORD	00BC	INSTRUCTIONS
+P1_KEY_R . . . . . . . . . . . .  	L WORD	00B4	INSTRUCTIONS
+P1_KEY_RR  . . . . . . . . . . .  	L WORD	00BA	INSTRUCTIONS
+P1_LEFT_PRESSED  . . . . . . . .  	L NEAR	05E4	INSTRUCTIONS
+P1_LEFT_RELEASED . . . . . . . .  	L NEAR	05ED	INSTRUCTIONS
+P1_MOVE_STEP . . . . . . . . . .  	L BYTE	0282	INSTRUCTIONS
+P1_MOVING_L  . . . . . . . . . .  	L BYTE	00C4	INSTRUCTIONS
+P1_MOVING_R  . . . . . . . . . .  	L BYTE	00C3	INSTRUCTIONS
+P1_NEXT_SHAPE  . . . . . . . . .  	L BYTE	0287	INSTRUCTIONS
+P1_PIXEL_POSITIONS . . . . . . .  	L WORD	0278	INSTRUCTIONS	Length = 0004
+P1_PRESSING_D  . . . . . . . . .  	L BYTE	00C0	INSTRUCTIONS
+P1_PRESSING_L  . . . . . . . . .  	L BYTE	00BF	INSTRUCTIONS
+P1_PRESSING_R  . . . . . . . . .  	L BYTE	00BE	INSTRUCTIONS
+P1_PRESSING_RL . . . . . . . . .  	L BYTE	00C2	INSTRUCTIONS
+P1_PRESSING_RR . . . . . . . . .  	L BYTE	00C1	INSTRUCTIONS
+P1_RAND_NUMBER . . . . . . . . .  	L DWORD	0283	INSTRUCTIONS
+P1_RIGHT_PRESSED . . . . . . . .  	L NEAR	05CC	INSTRUCTIONS
+P1_RIGHT_RELEASED  . . . . . . .  	L NEAR	05D5	INSTRUCTIONS
+P1_RL_PRESSED  . . . . . . . . .  	L NEAR	0627	INSTRUCTIONS
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-4
+
+
+P1_ROTATION  . . . . . . . . . .  	L BYTE	00C9	INSTRUCTIONS
+P1_RR_PRESSED  . . . . . . . . .  	L NEAR	061E	INSTRUCTIONS
+P1_SHAPE . . . . . . . . . . . .  	L BYTE	00C8	INSTRUCTIONS
+P1_SHAPE_X . . . . . . . . . . .  	L BYTE	026E	INSTRUCTIONS
+P1_SHAPE_Y . . . . . . . . . . .  	L BYTE	026F	INSTRUCTIONS
+P1_SPEED . . . . . . . . . . . .  	L BYTE	0280	INSTRUCTIONS
+P1_SPEED_STEP  . . . . . . . . .  	L BYTE	0281	INSTRUCTIONS
+P1_TILES_X . . . . . . . . . . .  	L BYTE	0270	INSTRUCTIONS	Length = 0004
+P1_TILES_Y . . . . . . . . . . .  	L BYTE	0274	INSTRUCTIONS	Length = 0004
+P1_TOP_LEFT  . . . . . . . . . .  	L WORD	00B2	INSTRUCTIONS
+P1_TOP_LEFT_NEXT . . . . . . . .  	L WORD	00B0	INSTRUCTIONS
+P2_BOARD . . . . . . . . . . . .  	L WORD	02A3	INSTRUCTIONS	Length = 00D2
+P2_CAN_MOVE_D  . . . . . . . . .  	L BYTE	0461	INSTRUCTIONS
+P2_COLOR . . . . . . . . . . . .  	L WORD	029E	INSTRUCTIONS
+P2_DELAY . . . . . . . . . . . .  	L BYTE	02A0	INSTRUCTIONS
+P2_DOWN_PRESSED  . . . . . . . .  	L NEAR	0598	INSTRUCTIONS
+P2_DOWN_RELEASED . . . . . . . .  	L NEAR	05AB	INSTRUCTIONS
+P2_GRID_X  . . . . . . . . . . .  	L NEAR	0883	INSTRUCTIONS
+P2_GRID_Y  . . . . . . . . . . .  	L NEAR	0880	INSTRUCTIONS
+P2_IS_NOT_PRESSING_L . . . . . .  	L NEAR	07C5	INSTRUCTIONS
+P2_IS_NOT_PRESSING_R . . . . . .  	L NEAR	0786	INSTRUCTIONS
+P2_KEEP_PRESSING_L . . . . . . .  	L NEAR	07B2	INSTRUCTIONS
+P2_KEEP_PRESSING_R . . . . . . .  	L NEAR	0773	INSTRUCTIONS
+P2_KEY_D . . . . . . . . . . . .  	L WORD	0291	INSTRUCTIONS
+P2_KEY_L . . . . . . . . . . . .  	L WORD	028F	INSTRUCTIONS
+P2_KEY_LR  . . . . . . . . . . .  	L WORD	0295	INSTRUCTIONS
+P2_KEY_R . . . . . . . . . . . .  	L WORD	028D	INSTRUCTIONS
+P2_KEY_RR  . . . . . . . . . . .  	L WORD	0293	INSTRUCTIONS
+P2_LEFT_PRESSED  . . . . . . . .  	L NEAR	0580	INSTRUCTIONS
+P2_LEFT_RELEASED . . . . . . . .  	L NEAR	0589	INSTRUCTIONS
+P2_MOVE_STEP . . . . . . . . . .  	L BYTE	045B	INSTRUCTIONS
+P2_MOVING_L  . . . . . . . . . .  	L BYTE	029D	INSTRUCTIONS
+P2_MOVING_R  . . . . . . . . . .  	L BYTE	029C	INSTRUCTIONS
+P2_NEXT_SHAPE  . . . . . . . . .  	L BYTE	0460	INSTRUCTIONS
+P2_PIXEL_POSITIONS . . . . . . .  	L WORD	0451	INSTRUCTIONS	Length = 0004
+P2_PRESSING_D  . . . . . . . . .  	L BYTE	0299	INSTRUCTIONS
+P2_PRESSING_L  . . . . . . . . .  	L BYTE	0298	INSTRUCTIONS
+P2_PRESSING_R  . . . . . . . . .  	L BYTE	0297	INSTRUCTIONS
+P2_PRESSING_RL . . . . . . . . .  	L BYTE	029B	INSTRUCTIONS
+P2_PRESSING_RR . . . . . . . . .  	L BYTE	029A	INSTRUCTIONS
+P2_RAND_NUMBER . . . . . . . . .  	L DWORD	045C	INSTRUCTIONS
+P2_RIGHT_PRESSED . . . . . . . .  	L NEAR	0568	INSTRUCTIONS
+P2_RIGHT_RELEASED  . . . . . . .  	L NEAR	0571	INSTRUCTIONS
+P2_RL_PRESSED  . . . . . . . . .  	L NEAR	05C3	INSTRUCTIONS
+P2_ROTATING  . . . . . . . . . .  	L NEAR	08BD	INSTRUCTIONS
+P2_ROTATION  . . . . . . . . . .  	L BYTE	02A2	INSTRUCTIONS
+P2_RR_PRESSED  . . . . . . . . .  	L NEAR	05BA	INSTRUCTIONS
+P2_SHAPE . . . . . . . . . . . .  	L BYTE	02A1	INSTRUCTIONS
+P2_SHAPE_X . . . . . . . . . . .  	L BYTE	0447	INSTRUCTIONS
+P2_SHAPE_Y . . . . . . . . . . .  	L BYTE	0448	INSTRUCTIONS
+P2_SPEED . . . . . . . . . . . .  	L BYTE	0459	INSTRUCTIONS
+P2_SPEED_STEP  . . . . . . . . .  	L BYTE	045A	INSTRUCTIONS
+P2_TILES_X . . . . . . . . . . .  	L BYTE	0449	INSTRUCTIONS	Length = 0004
+P2_TILES_Y . . . . . . . . . . .  	L BYTE	044D	INSTRUCTIONS	Length = 0004
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-5
+
+
+P2_TOP_LEFT  . . . . . . . . . .  	L WORD	028B	INSTRUCTIONS
+P2_TOP_LEFT_NEXT . . . . . . . .  	L WORD	0289	INSTRUCTIONS
+
+RANDOM_NUMBER  . . . . . . . . .  	L DWORD	000A	INSTRUCTIONS
+ROTATE . . . . . . . . . . . . .  	N PROC	089F	INSTRUCTIONS	Length = 0230
+ROTATING_I . . . . . . . . . . .  	L NEAR	0A17	INSTRUCTIONS
+ROTATING_I_1 . . . . . . . . . .  	L NEAR	0A2B	INSTRUCTIONS
+ROTATING_J . . . . . . . . . . .  	L NEAR	0931	INSTRUCTIONS
+ROTATING_L . . . . . . . . . . .  	L NEAR	096D	INSTRUCTIONS
+ROTATING_S_1 . . . . . . . . . .  	L NEAR	0913	INSTRUCTIONS
+ROTATING_T . . . . . . . . . . .  	L NEAR	09A9	INSTRUCTIONS
+ROTATING_Z . . . . . . . . . . .  	L NEAR	09E5	INSTRUCTIONS
+ROTATING_Z_1 . . . . . . . . . .  	L NEAR	09F9	INSTRUCTIONS
+
+SET_I_COORDINATES  . . . . . . .  	L NEAR	0A32	INSTRUCTIONS
+SET_S_COORDINATES  . . . . . . .  	L NEAR	091A	INSTRUCTIONS
+SET_Z_COORDINATES  . . . . . . .  	L NEAR	0A00	INSTRUCTIONS
+SHAPE_FOR_P2 . . . . . . . . . .  	L NEAR	0FA1	INSTRUCTIONS
+SHAPE_I_X  . . . . . . . . . . .  	L DWORD	0020	INSTRUCTIONS
+SHAPE_I_Y  . . . . . . . . . . .  	L DWORD	0028	INSTRUCTIONS
+SHAPE_J_X  . . . . . . . . . . .  	L DWORD	0070	INSTRUCTIONS
+SHAPE_J_Y  . . . . . . . . . . .  	L DWORD	0080	INSTRUCTIONS
+SHAPE_L_X  . . . . . . . . . . .  	L DWORD	0050	INSTRUCTIONS
+SHAPE_L_Y  . . . . . . . . . . .  	L DWORD	0060	INSTRUCTIONS
+SHAPE_O_X  . . . . . . . . . . .  	L DWORD	0018	INSTRUCTIONS
+SHAPE_O_Y  . . . . . . . . . . .  	L DWORD	001C	INSTRUCTIONS
+SHAPE_S_X  . . . . . . . . . . .  	L DWORD	0090	INSTRUCTIONS
+SHAPE_S_Y  . . . . . . . . . . .  	L DWORD	0098	INSTRUCTIONS
+SHAPE_T_X  . . . . . . . . . . .  	L DWORD	0030	INSTRUCTIONS
+SHAPE_T_Y  . . . . . . . . . . .  	L DWORD	0040	INSTRUCTIONS
+SHAPE_Z_X  . . . . . . . . . . .  	L DWORD	00A0	INSTRUCTIONS
+SHAPE_Z_Y  . . . . . . . . . . .  	L DWORD	00A8	INSTRUCTIONS
+SKIP_P1_FALLING  . . . . . . . .  	L NEAR	0814	INSTRUCTIONS
+SKIP_P2_FALLING  . . . . . . . .  	L NEAR	0843	INSTRUCTIONS
+SPACE_PRESSED  . . . . . . . . .  	L NEAR	0630	INSTRUCTIONS
+START  . . . . . . . . . . . . .  	L NEAR	132A	INSTRUCTIONS
+START_CLEARING_LINES . . . . . .  	L NEAR	0D18	INSTRUCTIONS
+START_DRAWING_BOARD  . . . . . .  	L NEAR	1112	INSTRUCTIONS
+START_DRAWING_NEXT_SHAPE . . . .  	L NEAR	0E48	INSTRUCTIONS
+START_GRAVITATION  . . . . . . .  	L NEAR	0C1A	INSTRUCTIONS
+START_MOVING_LEFT  . . . . . . .  	L NEAR	0B79	INSTRUCTIONS
+START_MOVING_RIGHT . . . . . . .  	L NEAR	0AEE	INSTRUCTIONS
+START_RANDOM_NUMBERS . . . . . .  	N PROC	0462	INSTRUCTIONS	Length = 0045
+START_ROTATING . . . . . . . . .  	L NEAR	08C3	INSTRUCTIONS
+START_UPDATING_RANDOM_NUMBER . .  	L NEAR	04BE	INSTRUCTIONS
+
+THE_END_OF_MOVING_LEFT . . . . .  	L NEAR	0BDE	INSTRUCTIONS
+THE_END_OF_MOVING_RIGHT  . . . .  	L NEAR	0B53	INSTRUCTIONS
+TILE_SIZE  . . . . . . . . . . .  	L WORD	0016	INSTRUCTIONS
+TOP_BORDER . . . . . . . . . . .  	L NEAR	1224	INSTRUCTIONS
+T_ROTATION_IS_SET  . . . . . . .  	L NEAR	09C4	INSTRUCTIONS
+
+UPDATE_BOARD_AND_MAKE_NEW_SHAPE   	L NEAR	0C63	INSTRUCTIONS
+UPDATE_P2_NUMBER . . . . . . . .  	L NEAR	04BB	INSTRUCTIONS
+Microsoft (R) Macro Assembler Version 5.00                  2/23/19 13:33:27
+                                                             Symbols-6
+
+
+UPDATE_RANDOM_NUMBER . . . . . .  	N PROC	04A7	INSTRUCTIONS	Length = 0030
+
+VARIABLES  . . . . . . . . . . .  	N PROC	0000	INSTRUCTIONS	Length = 0462
+VECTOR8  . . . . . . . . . . . .  	L DWORD	0001	INSTRUCTIONS
+VECTOR9  . . . . . . . . . . . .  	L DWORD	0005	INSTRUCTIONS
+
+WAITING  . . . . . . . . . . . .  	L NEAR	1374	INSTRUCTIONS
+
+@FILENAME  . . . . . . . . . . .  	TEXT  tetris		
+
+
+   1758 Source  Lines
+   1758 Total   Lines
+    252 Symbols
+
+  50350 + 417042 Bytes symbol space free
+
+      0 Warning Errors
+      0 Severe  Errors
